@@ -206,16 +206,13 @@ fun btIniciarSesion(
                             navHostController.navigate(Rutas.Admin)
                         } else {
                             if (Parametros.usuarioLogged!!.isActivo) {
-                                if (Parametros.usuarioLogged!!.isNuevo) {
-                                } else {
-                                    coroutineScope.launch(Dispatchers.IO) {
-                                        withContext(Dispatchers.Main) {
-                                            Toast.makeText(context, "Amigos encontrados", Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                                }
+                                navHostController.navigate(Rutas.Usuarios)
                             } else {
-                                Toast.makeText(context, "Necesitas ser activado por un administrador", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Necesitas ser activado por un administrador",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                         Toast.makeText(context, "Usuario encontrado", Toast.LENGTH_SHORT).show()
@@ -234,7 +231,6 @@ fun btIniciarSesion(
         Text("INICIAR SESIÓN")
     }
 }
-
 
 @Composable
 private fun btAccederRegistro(modifier: Modifier, navHostController: NavHostController) {

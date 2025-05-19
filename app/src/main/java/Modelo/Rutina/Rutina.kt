@@ -4,7 +4,7 @@ import java.io.Serializable
 
 data class Rutina(
     var id: String = "",
-    var idUsuario: String = "",
+    var emailUsuario: String = "",
     var titulo: String = "",
     var descripcion: String = "",
     var horaNotificacion: String = "",       // Ej: "08:30"

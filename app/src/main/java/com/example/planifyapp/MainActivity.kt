@@ -2,6 +2,7 @@ package com.example.planifyapp
 
 import ListadoAdmin.AdminView
 import ListadoAdmin.AdminViewModel
+import ListadoAmant.UsuariosView
 import Registro.RegistroView
 import Registro.RegistroViewModel
 import android.os.Bundle
@@ -22,8 +23,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.makefriendsapp.Enrutamiento.Rutas
+import com.example.makefriendsapp.ListadoAmigos.UsuariosViewModel
 import com.example.makefriendsapp.Login.LoginView
 import com.example.makefriendsapp.Login.LoginViewModel
+import com.example.planifyapp.Eventos.EventosView
+import com.example.planifyapp.Eventos.EventosViewModel
+import com.example.planifyapp.Eventos.NuevoEvento.NuevoEventoImportanteView
+import com.example.planifyapp.Rutinas.NuevaRutina.NuevaRutinaView
+import com.example.planifyapp.Rutinas.RutinasView
+import com.example.planifyapp.Rutinas.RutinasViewModel
 import com.example.planifyapp.ui.theme.PlanifyAPPTheme
 
 class MainActivity : ComponentActivity() {
@@ -40,6 +48,9 @@ class MainActivity : ComponentActivity() {
                     var selectedItemMiOpcion by remember { mutableStateOf("Principal") }
 
                     val AdminVM = AdminViewModel()
+                    val usuariosVM = UsuariosViewModel()
+                    val rutinasVM = RutinasViewModel()
+                    val eventosVM = EventosViewModel()
 
 
                     NavHost(navController = navController, startDestination = "Login") {
@@ -60,6 +71,45 @@ class MainActivity : ComponentActivity() {
                                 opcionElegida = {
                                     selectedItemMiOpcion = it
                                 }
+                            )
+                        }
+                        composable(Rutas.Usuarios) {
+                            UsuariosView(
+                                navHostController = navController,
+                                usuariosViewModel = usuariosVM,
+                                opcionElegida = {
+                                    selectedItemMiOpcion = it
+                                }
+                            )
+                        }
+                        composable(Rutas.Rutinas) {
+                            RutinasView(
+                                navHostController = navController,
+                                rutinasViewModel = rutinasVM,
+                                opcionElegida = {
+                                    selectedItemMiOpcion = it
+                                }
+                            )
+                        }
+                        composable(Rutas.NuevaRutina) {
+                            NuevaRutinaView(
+                                navHostController = navController,
+                                nuevaRutinaViewModel = rutinasVM
+                            )
+                        }
+                        composable(Rutas.Eventos) {
+                            EventosView(
+                                navHostController = navController,
+                                eventosViewModel = eventosVM,
+                                opcionElegida = {
+                                    selectedItemMiOpcion = it
+                                }
+                            )
+                        }
+                        composable(Rutas.NuevoEvento) {
+                            NuevoEventoImportanteView(
+                                navHostController = navController,
+                                eventosViewModel = eventosVM,
                             )
                         }
                     }

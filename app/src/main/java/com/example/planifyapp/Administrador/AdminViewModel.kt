@@ -178,9 +178,6 @@ class AdminViewModel : ViewModel() {
                         val edad = document.getLong("Edad") ?: 0L
                         val genero = document.getLong("Genero") ?: 0L
                         val foto = document.getString("Foto") ?: ""
-                        val preferenciasMap = document.get("Preferencias") as? ArrayList<String> ?: arrayListOf()
-
-                        val isNuevo = document.getBoolean("Es nuevo") ?: false
 
                         val usuario = Usuario(
                             nombreUser = nombreUser,
@@ -189,8 +186,7 @@ class AdminViewModel : ViewModel() {
                             isActivo = isActivo,
                             edad = edad,
                             genero = genero,
-                            foto = foto,
-                            isNuevo = isNuevo
+                            foto = foto
                         )
 
                         // Agregar usuario a la lista estática en Interventanas

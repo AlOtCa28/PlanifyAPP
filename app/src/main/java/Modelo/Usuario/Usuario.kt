@@ -9,8 +9,7 @@ data class Usuario(
     var isActivo: Boolean,
     var edad: Long,
     var genero: Long,
-    var foto: String,
-    var isNuevo: Boolean
+    var foto: String
 ) : Serializable {
 
     // Constructor secundario vacío requerido por Firebase
@@ -21,12 +20,11 @@ data class Usuario(
         edad = 0L,
         genero = 1L,
         foto = "",
-        isActivo = false,
-        isNuevo = false
+        isActivo = false
     )
 
     override fun toString(): String {
-        return "Usuario(nombreUser='$nombreUser', correo='$correo', roles=$roles, edad=$edad, genero=$genero, foto='$foto', isActivo=$isActivo, isNuevo=$isNuevo)"
+        return "Usuario(nombreUser='$nombreUser', correo='$correo', roles=$roles, edad=$edad, genero=$genero, foto='$foto', isActivo=$isActivo)"
     }
 }
 
