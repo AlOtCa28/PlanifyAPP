@@ -144,26 +144,7 @@ fun AdminView(navHostController: NavHostController,
                 topBar = {
                     ToolBarListado("Lista de admin", drawerState, expanded, {
                         Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                    },
-                        {
-                            //val job = GlobalScope.launch(Dispatchers.Main) {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Pulsado marcador ventana admin $it",
-                                    actionLabel = "Close",
-                                    duration = SnackbarDuration.Indefinite
-                                )
-                                //Si en tiempo ponemos short se oculta en un breve tiempo.
-                            }
-                            //Si en tiempo ponemos short se oculta en un breve tiempo.
-                        },
-                        {
-                            Toast.makeText(context, "Pulsado menú share $it", Toast.LENGTH_SHORT).show()
-                        }
-                    ) {
-                        Toast.makeText(context, "Pulsado menú puntos $it", Toast.LENGTH_SHORT)
-                            .show()
-                    }
+                    })
                 },
                 bottomBar = {}
             ) {
@@ -285,10 +266,7 @@ private fun ToolBarListado(
     title: String,
     drawerState : DrawerState,
     expanded : Boolean,
-    onNavigationClick: (String) -> Unit,
-    onMarkerClick: (String) -> Unit,
-    onShareClick: (String) -> Unit,
-    onSettingClick: (String) -> Unit
+    onNavigationClick: (String) -> Unit
 ) {
     var scope = rememberCoroutineScope()
     var exp by remember { mutableStateOf(expanded) }
@@ -311,18 +289,6 @@ private fun ToolBarListado(
                 onNavigationClick("Menu")
             }) {
                 Icon(imageVector = Icons.Filled.Menu, contentDescription = "Menú desplegable")
-            }
-        },
-        actions = {
-            IconButton(onClick = { onShareClick("S") }) {
-                Icon(imageVector = Icons.Filled.PersonAddAlt1, contentDescription = "Crear usuario")
-            }
-
-            IconButton(onClick = {
-                exp = true
-                onSettingClick("...")
-            }) {
-                Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "Ver más")
             }
         }
     )

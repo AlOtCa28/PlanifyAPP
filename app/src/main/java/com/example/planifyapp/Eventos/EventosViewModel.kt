@@ -26,9 +26,21 @@ class EventosViewModel : ViewModel() {
             }
     }
 
-    fun agregarEvento(evento: EventoImportante) {
-        db.collection("EventosImportantes").add(evento)
+    fun actualizarNotificacionEvento(evento: EventoImportante, nuevoEstado: Boolean) {
+        val docId = evento.id
+        db.collection("EventosImportantes").document(docId)
+            .update("notificarUnaSemanaAntes", nuevoEstado)
+            .addOnSuccessListener {
+                cargarEventos(evento.emailUsuario)
+            }
     }
+
+    fun agregarEvento(evento: EventoImportante) {
+        val docRef = db.collection("EventosImportantes").document()
+        evento.id = docRef.id
+        docRef.set(evento)
+    }
+
 
     fun eliminarEvento(eventoId: String) {
         db.collection("EventosImportantes").document(eventoId).delete()

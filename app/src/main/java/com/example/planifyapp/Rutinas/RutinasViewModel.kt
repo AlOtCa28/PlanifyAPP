@@ -1,6 +1,7 @@
 package com.example.planifyapp.Rutinas
 
 import Modelo.Rutina.Rutina
+import Modelo.Rutina.Tarea
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
@@ -8,32 +9,108 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class RutinasViewModel : ViewModel()  {
+class RutinasViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
 
+    // Rutinas
     private val _rutinas = MutableStateFlow<List<Rutina>>(emptyList())
     val rutinas: StateFlow<List<Rutina>> = _rutinas
 
+    // Tareas de la rutina seleccionada
+    private val _tareas = MutableStateFlow<List<Tarea>>(emptyList())
+    val tareas: StateFlow<List<Tarea>> = _tareas
+
+    private val _rutinaSeleccionada = MutableStateFlow<Rutina?>(null)
+    val rutinaSeleccionada: StateFlow<Rutina?> = _rutinaSeleccionada
+
+    fun cargarRutinaPorId(rutinaId: String) {
+        db.collection("Rutinas").document(rutinaId).get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    val rutina = doc.toObject(Rutina::class.java)?.copy(id = doc.id)
+                    _rutinaSeleccionada.value = rutina
+                }
+            }
+            .addOnFailureListener {
+                _rutinaSeleccionada.value = null
+            }
+    }
+
+    // --- Rutinas ---
+
     fun cargarRutinas(emailUsuario: String) {
-        viewModelScope.launch {
-            db.collection("Rutinas")
-                .whereEqualTo("emailUsuario", emailUsuario)
-                .get()
-                .addOnSuccessListener { resultado ->
-                    val lista = resultado.mapNotNull { it.toObject(Rutina::class.java) }
-                    _rutinas.value = lista
+        db.collection("Rutinas")
+            .whereEqualTo("emailUsuario", emailUsuario)
+            .get()
+            .addOnSuccessListener { resultado ->
+                val lista = resultado.mapNotNull { doc ->
+                    val rutina = doc.toObject(Rutina::class.java).copy(id = doc.id)
+                    rutina
                 }
-                .addOnFailureListener {
-                    _rutinas.value = emptyList()
-                }
+                _rutinas.value = lista
+            }
+            .addOnFailureListener {
+                _rutinas.value = emptyList()
+            }
+    }
+
+    fun actualizarEstadoRutina(rutina: Rutina, nuevoEstado: Boolean) {
+        if (rutina.id.isNotEmpty()) {
+            db.collection("Rutinas").document(rutina.id)
+                .update("esActiva", nuevoEstado)
         }
     }
 
     fun agregarRutina(rutina: Rutina) {
-        db.collection("Rutinas").add(rutina)
+        db.collection("Rutinas")
+            .add(rutina)
+            .addOnSuccessListener { docRef ->
+                db.collection("Rutinas").document(docRef.id).update("id", docRef.id)
+            }
     }
 
     fun eliminarRutina(rutinaId: String) {
         db.collection("Rutinas").document(rutinaId).delete()
+    }
+
+    // --- Tareas ---
+
+    fun cargarTareas(rutinaId: String) {
+        if (tareas.value.isEmpty()) {
+            db.collection("Rutinas").document(rutinaId).collection("Tareas")
+                .get()
+                .addOnSuccessListener { result ->
+                    val tareasList = result.mapNotNull { it.toObject(Tarea::class.java) }
+                    _tareas.value = tareasList
+                }
+        }
+    }
+
+    fun actualizarTarea(rutinaId: String, tarea: Tarea) {
+        if (tarea.id.isNotEmpty()) {
+            db.collection("Rutinas")
+                .document(rutinaId)
+                .collection("Tareas")
+                .document(tarea.id)
+                .set(tarea)
+        }
+    }
+
+    fun eliminarTarea(rutinaId: String, tareaId: String) {
+        db.collection("Rutinas")
+            .document(rutinaId)
+            .collection("Tareas")
+            .document(tareaId)
+            .delete()
+    }
+
+    fun agregarTarea(rutinaId: String, tarea: Tarea, onComplete: (Boolean, String?) -> Unit = { _, _ -> }) {
+        val tareasCollection = db.collection("Rutinas").document(rutinaId).collection("Tareas")
+        val docId = tareasCollection.document().id
+        val tareaConId = tarea.copy(id = docId)
+
+        tareasCollection.document(docId).set(tareaConId)
+            .addOnSuccessListener { onComplete(true, docId) }
+            .addOnFailureListener { e -> onComplete(false, e.message) }
     }
 }
