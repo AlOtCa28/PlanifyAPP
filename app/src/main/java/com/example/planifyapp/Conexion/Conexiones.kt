@@ -1,12 +1,15 @@
 package Conexion
 
 
+import Modelo.TareasYLogros.Logro
+import Modelo.TareasYLogros.TareaGeneral
 import Modelo.Usuario.Usuario
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FieldPath
@@ -233,10 +236,30 @@ object Conexiones {
             }
     }
 
-
-    suspend fun obtenerEventos(): QuerySnapshot? {
-
-        return db.collection("Eventos").get().await()
-
+    fun obtenerLogrosGenerales(): Task<QuerySnapshot> {
+        return FirebaseFirestore.getInstance()
+            .collection("LogrosGenerales")
+            .get()
     }
+
+
+    fun eliminarLogroPorId(id: String): Task<Void> {
+        return FirebaseFirestore.getInstance()
+            .collection("LogrosGenerales")
+            .document(id)
+            .delete()
+    }
+
+    fun obtenerTareasGenerales() = FirebaseFirestore.getInstance()
+        .collection("TareasGenerales")
+        .get()
+
+
+    fun eliminarTareaGeneral(id: String): Task<Void> {
+        return FirebaseFirestore.getInstance()
+            .collection("TareasGenerales")
+            .document(id)
+            .delete()
+    }
+
 }

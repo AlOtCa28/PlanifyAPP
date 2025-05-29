@@ -5,6 +5,7 @@ import ListadoAdmin.AdminViewModel
 import ListadoAmant.UsuariosView
 import Registro.RegistroView
 import Registro.RegistroViewModel
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -28,17 +30,26 @@ import com.example.makefriendsapp.Enrutamiento.Rutas
 import com.example.makefriendsapp.ListadoAmigos.UsuariosViewModel
 import com.example.makefriendsapp.Login.LoginView
 import com.example.makefriendsapp.Login.LoginViewModel
+import com.example.planifyapp.Estadisticas.EstadisticasView
 import com.example.planifyapp.Eventos.EventosView
 import com.example.planifyapp.Eventos.EventosViewModel
 import com.example.planifyapp.Eventos.NuevoEvento.NuevoEventoImportanteView
+import com.example.planifyapp.GestionTareas.GestionTareasView
+import com.example.planifyapp.GestionTareas.NuevaTareaGeneralView
+import com.example.planifyapp.Logros.GestionLogrosView
+import com.example.planifyapp.Logros.NuevoLogroView
+import com.example.planifyapp.Perfil.PerfilView
 import com.example.planifyapp.Rutinas.EditarRutinas.DetalleRutinaView
 import com.example.planifyapp.Rutinas.NuevaRutina.NuevaRutinaView
 import com.example.planifyapp.Rutinas.RutinasView
 import com.example.planifyapp.Rutinas.RutinasViewModel
 import com.example.planifyapp.Tareas.NuevaTareaView
+import com.example.planifyapp.Usuario.GamificacionViewModel
 import com.example.planifyapp.ui.theme.PlanifyAPPTheme
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
+    @SuppressLint("ViewModelConstructorInComposable")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -55,6 +66,7 @@ class MainActivity : ComponentActivity() {
                     val usuariosVM = UsuariosViewModel()
                     val rutinasVM = RutinasViewModel()
                     val eventosVM = EventosViewModel()
+                    val gamificacionVM = GamificacionViewModel()
 
 
                     NavHost(navController = navController, startDestination = "Login") {
@@ -130,6 +142,43 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             val rutinaId = backStackEntry.arguments?.getString("rutinaId") ?: ""
                             NuevaTareaView(rutinaId, rutinasVM, navController)
+                        }
+                        composable(Rutas.Perfil) {
+                            PerfilView(
+                                navController,
+                                gamificacionVM)
+                        }
+                        composable(Rutas.Estadisticas) {
+                            EstadisticasView(
+                                navController,
+                                gamificacionVM)
+                        }
+                        composable(Rutas.AdminLogros) {
+                            GestionLogrosView(
+                                navHostController = navController,
+                                adminViewModel = AdminVM,
+                                opcionElegida = { selectedItemMiOpcion = it }
+                            )
+                        }
+                        composable(Rutas.AdminTareas) {
+                            GestionTareasView(
+                                navHostController = navController,
+                                adminViewModel = AdminVM,
+                                opcionElegida = { selectedItemMiOpcion = it }
+                            )
+                        }
+
+                        composable(Rutas.NuevaTareaGeneral) {
+                             NuevaTareaGeneralView(
+                                navHostController = navController,
+                                adminViewModel = AdminVM)
+                        }
+
+                        composable(Rutas.NuevoLogro) {
+                            NuevoLogroView(
+                                navHostController = navController,
+                                adminViewModel = AdminVM
+                            )
                         }
                     }
                 }

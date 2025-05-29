@@ -3,12 +3,19 @@ package com.example.planifyapp.Usuario
 import Modelo.TareasYLogros.LogroGamificado
 import Modelo.TareasYLogros.TareaGamificada
 import Modelo.TareasYLogros.TareaGeneral
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-
+import kotlinx.coroutines.suspendCancellableCoroutine
+import java.io.File
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 
 class GamificacionViewModel : ViewModel() {
@@ -28,11 +35,10 @@ class GamificacionViewModel : ViewModel() {
         // Cargar tareas generales
         db.collection("TareasGenerales").get().addOnSuccessListener { tareasSnapshot ->
 
-            val tareasGenerales = tareasSnapshot.documents.map { doc ->
-                val tarea = doc.toObject(TareaGeneral::class.java)
-                tarea?.id = doc.id
-                tarea!!
+            val tareasGenerales = tareasSnapshot.documents.mapNotNull { doc ->
+                doc.toObject(TareaGeneral::class.java)?.apply { id = doc.id }
             }
+
 
             // Cargar progreso de tareas del usuario
             db.collection("ProgresoUsuarios")
@@ -129,6 +135,21 @@ class GamificacionViewModel : ViewModel() {
             ).addOnSuccessListener {
                 cargarDatos(emailUsuario)
             }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun descargarImagenDesdeFirebase(correo: String): Bitmap? = suspendCancellableCoroutine { continuation ->
+        val localFile = File.createTempFile("tempImage", "jpeg")
+
+        val storage = FirebaseStorage.getInstance()
+        val storageReference = storage.reference.child("imagenes/$correo")
+
+        storageReference.getFile(localFile).addOnSuccessListener {
+            val bitmap = BitmapFactory.decodeFile(localFile.absolutePath)
+            continuation.resume(bitmap)
+        }.addOnFailureListener { exception ->
+            continuation.resumeWithException(exception)
+        }
     }
 
 }

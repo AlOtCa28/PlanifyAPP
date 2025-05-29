@@ -9,6 +9,13 @@ object Rutas {
     const val Eventos = "Eventos"
     const val NuevaRutina = "NuevaRutina"
     const val NuevoEvento = "NuevoEvento"
+    const val Estadisticas = "Estadisticas"
+    const val Perfil = "Perfil"
+    const val AdminTareas = "AdminTareas"
+    const val AdminLogros = "AdminLogros"
+    const val NuevaTareaGeneral = "NuevaTarea"
+    const val NuevoLogro = "NuevoLogro"
+
 
     // Ruta base para detalleRutina con parámetro {rutinaId}
     const val detalleRutinaBase = "detalleRutina/{rutinaId}"

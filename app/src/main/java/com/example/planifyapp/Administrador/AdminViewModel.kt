@@ -1,9 +1,15 @@
 package ListadoAdmin
 
 import Conexion.Conexiones
+import Modelo.TareasYLogros.Logro
+import Modelo.TareasYLogros.TareaGamificada
+import Modelo.TareasYLogros.TareaGeneral
 import Modelo.Usuario.Usuario
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,6 +18,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.makefriendsapp.Auxiliar.Parametros
 import com.example.makefriendsapp.Modelo.Menu.OpcionMenu
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -56,9 +65,19 @@ class AdminViewModel : ViewModel() {
     private val _usuarios = mutableStateListOf<Usuario>()
     val usuarios : SnapshotStateList<Usuario> get() = _usuarios
 
+    // Para tareas
+    private val _tareasGenerales = MutableStateFlow<List<TareaGeneral>>(emptyList())
+    val tareasGenerales: StateFlow<List<TareaGeneral>> = _tareasGenerales
+
+    // Para logros
+    private val _logrosGenerales = MutableStateFlow<List<Logro>>(emptyList())
+    val logrosGenerales = _logrosGenerales.asStateFlow()
+
+
     init {
         obtenerUsuarios()
-
+        cargarTareasGenerales()
+        cargarLogrosGenerales()
     }
 
     fun initializeSwitchStates(usuarios: List<Usuario>) {
@@ -223,4 +242,73 @@ class AdminViewModel : ViewModel() {
         }
     }
 
+    fun cargarTareasGenerales() {
+        viewModelScope.launch {
+            try {
+                val querySnapshot = Conexiones.obtenerTareasGenerales().await()
+                val tareas = querySnapshot.documents.mapNotNull { doc ->
+                    doc.toObject(TareaGeneral::class.java)?.copy(id = doc.id)
+                }
+                _tareasGenerales.value = tareas
+            } catch (e: Exception) {
+                Log.e("AdminTareasVM", "Error al cargar tareas generales: ${e.message}")
+            }
+        }
+    }
+
+    fun cargarLogrosGenerales() {
+        Conexiones.obtenerLogrosGenerales()
+            .addOnSuccessListener {
+                val logros = it.documents.mapNotNull { doc ->
+                    doc.toObject(Logro::class.java)?.copy(id = doc.id)
+                }
+                _logrosGenerales.value = logros
+            }
+    }
+
+    fun crearLogro(logro: Logro, onComplete: (Boolean) -> Unit) {
+        val docRef = Conexiones.db.collection("LogrosGenerales").document()
+        val logroConId = logro.copy(id = docRef.id)
+        docRef.set(logroConId)
+            .addOnSuccessListener { onComplete(true) }
+            .addOnFailureListener {
+                Log.e("AdminTareasVM", "Error creando logro: ${it.message}")
+                onComplete(false)
+            }
+    }
+
+    fun eliminarLogro(id: String, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                Conexiones.eliminarLogroPorId(id).await()
+                cargarLogrosGenerales()
+                onComplete(true)
+            } catch (e: Exception) {
+                Log.e("AdminTareasVM", "Error al eliminar logro: ${e.message}")
+                onComplete(false)
+            }
+        }
+    }
+
+    fun crearTarea(tarea: TareaGeneral, onComplete: (Boolean) -> Unit) {
+        val docRef = Conexiones.db.collection("TareasGenerales").document()
+        val tareaConId = tarea.copy(id = docRef.id)
+        docRef.set(tareaConId)
+            .addOnSuccessListener { onComplete(true) }
+            .addOnFailureListener {
+                Log.e("AdminTareasVM", "Error creando tarea: ${it.message}")
+                onComplete(false)
+            }
+    }
+
+    fun eliminarTareaGeneral(id: String) {
+        viewModelScope.launch {
+            try {
+                Conexiones.eliminarTareaGeneral(id).await()
+                cargarTareasGenerales()
+            } catch (e: Exception) {
+                Log.e("AdminTareasVM", "Error al eliminar tarea: ${e.message}")
+            }
+        }
+    }
 }

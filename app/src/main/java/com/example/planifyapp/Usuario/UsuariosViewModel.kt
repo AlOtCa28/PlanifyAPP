@@ -82,32 +82,6 @@ class UsuariosViewModel : ViewModel() {
         _userSelected.value = user
     }
 
-    fun resetFotoUser(context : Context){
-
-        val drawable = ContextCompat.getDrawable(context, R.drawable.planifyimg) ?: throw IllegalArgumentException("Invalid drawable ID")
-        val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        drawable.setBounds(0, 0, canvas.width, canvas.height)
-        drawable.draw(canvas)
-        _fotoUserSelected.value = bitmap
-
-    }
-
-    fun initializeFotosUser(context: Context, usuarios: List<Usuario>) {
-        viewModelScope.launch {
-            _fotosUsers.clear() // Limpiar la lista al inicio
-            usuarios.forEach { usuario ->
-                val foto = descargarImagenDesdeFirebase(usuario.correo)
-                if (foto != null) {
-                    _fotosUsers.add(foto)
-                } else {
-                    val drawable = ContextCompat.getDrawable(context, R.drawable.planifyimg)
-                    _fotosUsers.add(drawable?.toBitmap() ?: return@forEach)
-                }
-            }
-        }
-    }
-
     fun onShowDilaogClick(){
         _showDIalogInfoUser.value = true
     }
@@ -118,21 +92,6 @@ class UsuariosViewModel : ViewModel() {
 
     fun setFotoUserSelected(foto : Bitmap){
         _fotoUserSelected.value = foto
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun descargarImagenDesdeFirebase(correo: String): Bitmap? = suspendCancellableCoroutine { continuation ->
-        val localFile = File.createTempFile("tempImage", "jpeg")
-
-        val storage = FirebaseStorage.getInstance()
-        val storageReference = storage.reference.child("imagenes/$correo")
-
-        storageReference.getFile(localFile).addOnSuccessListener {
-            val bitmap = BitmapFactory.decodeFile(localFile.absolutePath)
-            continuation.resume(bitmap)
-        }.addOnFailureListener { exception ->
-            continuation.resumeWithException(exception)
-        }
     }
 
     fun obtenerUsuarios() {

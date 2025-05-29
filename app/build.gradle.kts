@@ -63,6 +63,7 @@ dependencies {
 
     // Google Play Services
     implementation(libs.play.services.maps)
+    implementation(libs.androidx.navigation.runtime.android)
 
     // Testing
     testImplementation(libs.junit)

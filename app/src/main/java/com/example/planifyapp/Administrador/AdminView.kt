@@ -30,7 +30,9 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PersonAddAlt1
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,6 +47,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
@@ -77,53 +80,44 @@ import kotlinx.coroutines.launch
 
 @SuppressLint("ContextCastToActivity")
 @Composable
-fun AdminView(navHostController: NavHostController,
-              adminViewModel: AdminViewModel,
-              pantallaCargar : String,
-              opcionElegida:(String)->Unit,
+fun AdminView(
+    navHostController: NavHostController,
+    adminViewModel: AdminViewModel,
+    pantallaCargar: String,
+    opcionElegida: (String) -> Unit,
 ) {
-
-    var context = LocalContext.current as Activity
-
+    val context = LocalContext.current as Activity
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val expanded: Boolean by adminViewModel.isMenuExpanded.observeAsState(initial = false)
 
     val opcs = Factorias.factoriaOpcionesMenuAdmin()
-
     val selectedItemOpcionMenu: OpcionMenu by adminViewModel.selectedItemOpcionMneu.observeAsState(initial = opcs[0])
-
-    val userSelected : String by adminViewModel.userSelected.observeAsState(initial = "")
-
-    val showDialogPersona : Boolean by adminViewModel.showDialogPersona.observeAsState(initial = false)
-
+    val userSelected: String by adminViewModel.userSelected.observeAsState(initial = "")
+    val showDialogPersona: Boolean by adminViewModel.showDialogPersona.observeAsState(initial = false)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-
-            ModalDrawerSheet {
+            ModalDrawerSheet(drawerContainerColor = FuchsiaLight) {
                 Spacer(Modifier.height(12.dp))
-
-                opcs.forEach{
+                opcs.forEachIndexed { index, it ->
                     NavigationDrawerItem(
-                        icon = { Icon(it.icono, contentDescription = it.opcion) },
-                        label = { Text(it.opcion) },
+                        icon = { Icon(it.icono, contentDescription = it.opcion, tint = DarkBackground) },
+                        label = { Text(it.opcion, color = DarkBackground) },
                         selected = it.opcion == selectedItemOpcionMenu.opcion,
                         onClick = {
-                            adminViewModel.onSelectedItemMenuChange(it) //Aquí obtenemos el seleccionado.
-                            scope.launch {
-                                drawerState.close()
-                            }
-                            when(selectedItemOpcionMenu.codigo){
+                            adminViewModel.onSelectedItemMenuChange(it)
+                            scope.launch { drawerState.close() }
+                            when (it.codigo) {
                                 0 -> {
-                                    //Opcion del menu de usuarios
                                     adminViewModel.obtenerUsuarios()
                                     navHostController.navigate(Rutas.Admin)
                                 }
-                                1 -> {
-                                    //salir de la aplicacion
+                                1 -> navHostController.navigate(Rutas.AdminLogros)
+                                2 -> navHostController.navigate(Rutas.AdminTareas)
+                                3 -> {
                                     FirebaseAuth.getInstance().signOut()
                                     navHostController.navigate(Rutas.login)
                                 }
@@ -132,34 +126,30 @@ fun AdminView(navHostController: NavHostController,
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
+                    if (index != opcs.lastIndex) {
+                        Spacer(modifier = Modifier.height(12.dp)) // Espacio extra entre items
+                    }
                 }
-
             }
         },
         content = {
             Scaffold(
-                snackbarHost = {
-                    SnackbarHost(hostState = snackbarHostState)
-                },
+                containerColor = FuchsiaLight,
+                snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                 topBar = {
-                    ToolBarListado("Lista de admin", drawerState, expanded, {
+                    ToolBarListado("Lista de admin", drawerState, expanded) {
                         Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                    })
+                    }
                 },
                 bottomBar = {}
             ) {
-
-                if (Parametros.usuarios.isNotEmpty()){
-                    RVUsuariosAdmin(
-                        adminViewModel = adminViewModel,
-                        paddig = it
-                    )
+                if (Parametros.usuarios.isNotEmpty()) {
+                    RVUsuariosAdmin(adminViewModel = adminViewModel, paddig = it)
                 }
             }
         }
     )
 }
-
 
 
 @SuppressLint("ContextCastToActivity")
@@ -175,86 +165,85 @@ private fun ItemUsuarioAdmin(
     var estadoCBUsuario by remember { mutableStateOf(u.roles.contains(1L)) }
 
     Card(
-        border = BorderStroke(2.dp, color = DarkBackground),
+        border = BorderStroke(2.dp, DarkBackground),
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
                 onLongClick = { onItemSeleccionado(u, 3) },
                 onClick = { onItemSeleccionado(u, 1) }
             )
-            .background(color = DarkBackground)
-            .padding(1.dp)
+            .padding(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             Modifier
-                .border(BorderStroke(2.dp, Color.Black))
-                .clip(shape = RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
+                .background(FuchsiaLight)
+                .padding(12.dp)
         ) {
             Text(
                 text = u.nombreUser,
-                style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(8.dp)
+                style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DarkBackground),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = u.nombreUser,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
+                Text(text = u.nombreUser, color = DarkBackground)
                 Switch(
                     checked = estadoSwitch,
                     onCheckedChange = { newValue ->
                         estadoSwitch = newValue
                         adminViewModel.activarUsuario(u.correo, newValue)
-                    }
+                    },
+                    colors = SwitchDefaults.colors(checkedThumbColor = DarkBackground)
                 )
             }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Checkbox(
-                checked = estadoCBAdmin,
-                onCheckedChange = { newValue ->
-                    if (newValue) {
-                        adminViewModel.addRol(u.correo, 0L)
-                        u.roles.add(0L)
-                    } else if (u.roles.size > 1) {
-                        adminViewModel.removeRol(u.correo, 0L)
-                        u.roles.remove(0L)
-                    }
-                    estadoCBAdmin = newValue
-                }
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(text = "Admin.")
 
-            Checkbox(
-                checked = estadoCBUsuario,
-                onCheckedChange = { newValue ->
-                    if (newValue) {
-                        adminViewModel.addRol(u.correo, 1L)
-                        u.roles.add(1L)
-                    } else if (u.roles.size > 1) {
-                        adminViewModel.removeRol(u.correo, 1L)
-                        u.roles.remove(1L)
-                    }
-                    estadoCBUsuario = newValue
-                }
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(text = "User")
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Checkbox(
+                    checked = estadoCBAdmin,
+                    onCheckedChange = { newValue ->
+                        if (newValue) {
+                            adminViewModel.addRol(u.correo, 0L)
+                            u.roles.add(0L)
+                        } else if (u.roles.size > 1) {
+                            adminViewModel.removeRol(u.correo, 0L)
+                            u.roles.remove(0L)
+                        }
+                        estadoCBAdmin = newValue
+                    },
+                    colors = CheckboxDefaults.colors(checkedColor = DarkBackground)
+                )
+                Text(text = "Admin.", color = DarkBackground, modifier = Modifier.padding(end = 16.dp))
+
+                Checkbox(
+                    checked = estadoCBUsuario,
+                    onCheckedChange = { newValue ->
+                        if (newValue) {
+                            adminViewModel.addRol(u.correo, 1L)
+                            u.roles.add(1L)
+                        } else if (u.roles.size > 1) {
+                            adminViewModel.removeRol(u.correo, 1L)
+                            u.roles.remove(1L)
+                        }
+                        estadoCBUsuario = newValue
+                    },
+                    colors = CheckboxDefaults.colors(checkedColor = DarkBackground)
+                )
+                Text(text = "User", color = DarkBackground)
+            }
         }
     }
 }
@@ -264,11 +253,11 @@ private fun ItemUsuarioAdmin(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ToolBarListado(
     title: String,
-    drawerState : DrawerState,
-    expanded : Boolean,
+    drawerState: DrawerState,
+    expanded: Boolean,
     onNavigationClick: (String) -> Unit
 ) {
-    var scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     var exp by remember { mutableStateOf(expanded) }
 
     TopAppBar(
@@ -279,7 +268,6 @@ private fun ToolBarListado(
             titleContentColor = Color.White,
             actionIconContentColor = Color.White
         ),
-        modifier = Modifier.background(color = Color.Blue),
         title = { Text(text = title) },
         navigationIcon = {
             IconButton(onClick = {
@@ -314,23 +302,15 @@ fun RVUsuariosAdmin(
                 adminViewModel = adminViewModel,
                 onItemSeleccionado = { usuario, i ->
                     when (i) {
-                        1 -> {
-                            // Acción para el primer caso
-                            Log.d("Usuario seleccionado", "Usuario: ${usuario.nombreUser}")
-                        }
-                        2 -> {
-                            // Acción para el segundo caso
-                            Log.d("Usuario seleccionado", "Usuario: ${usuario.nombreUser}")
-                        }
-                        3 -> {
-                            // Acción para el tercer caso
-                            Log.d("Usuario seleccionado", "Usuario: ${usuario.nombreUser}")
-                        }
+                        1 -> Log.d("Usuario seleccionado", "Usuario: ${usuario.nombreUser}")
+                        2 -> Log.d("Usuario seleccionado", "Usuario: ${usuario.nombreUser}")
+                        3 -> Log.d("Usuario seleccionado", "Usuario: ${usuario.nombreUser}")
                     }
-                },
+                }
             )
         }
     }
 }
+
 
 

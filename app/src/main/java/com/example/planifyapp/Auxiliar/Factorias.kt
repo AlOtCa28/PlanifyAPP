@@ -5,10 +5,13 @@ import Modelo.Usuario.Usuario
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.PeopleAlt
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.RoomPreferences
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Task
 import com.example.makefriendsapp.Modelo.Menu.OpcionMenu
 
 object Factorias {
@@ -22,10 +25,11 @@ object Factorias {
 
 
     fun factoriaOpcionesMenuAdmin(): ArrayList<OpcionMenu>{
-        var titulos = arrayListOf("Usuarios",  "Salir")
+        var titulos = arrayListOf("Usuarios", "Logros", "Tareas" ,"Salir")
         var icons = arrayListOf(
-            Icons.Default.Person, Icons.Default.CalendarMonth, Icons.Default.Mail,
-            Icons.Default.PeopleAlt, Icons.Default.RoomPreferences,
+            Icons.Default.Person,
+            Icons.Default.EmojiEvents,
+            Icons.Default.Task,
             Icons.AutoMirrored.Filled.ExitToApp
         )
         var opciones = ArrayList<OpcionMenu>()

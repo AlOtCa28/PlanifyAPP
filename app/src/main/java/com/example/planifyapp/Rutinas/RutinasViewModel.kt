@@ -75,15 +75,17 @@ class RutinasViewModel : ViewModel() {
 
     // --- Tareas ---
 
+    // En tu ViewModel
     fun cargarTareas(rutinaId: String) {
-        if (tareas.value.isEmpty()) {
-            db.collection("Rutinas").document(rutinaId).collection("Tareas")
-                .get()
-                .addOnSuccessListener { result ->
-                    val tareasList = result.mapNotNull { it.toObject(Tarea::class.java) }
-                    _tareas.value = tareasList
+        db.collection("Rutinas")
+            .document(rutinaId)
+            .collection("Tareas")
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null) {
+                    val lista = snapshot.documents.mapNotNull { it.toObject(Tarea::class.java)?.copy(id = it.id) }
+                    _tareas.value = lista
                 }
-        }
+            }
     }
 
     fun actualizarTarea(rutinaId: String, tarea: Tarea) {
@@ -112,5 +114,19 @@ class RutinasViewModel : ViewModel() {
         tareasCollection.document(docId).set(tareaConId)
             .addOnSuccessListener { onComplete(true, docId) }
             .addOnFailureListener { e -> onComplete(false, e.message) }
+    }
+
+    fun marcarTareaCompletada(tareaId: String, checked: Boolean) {
+        val rutina = _rutinaSeleccionada.value
+        if (rutina != null && tareaId.isNotEmpty()) {
+            db.collection("Rutinas")
+                .document(rutina.id)
+                .collection("Tareas")
+                .document(tareaId)
+                .update("completada", checked)
+                .addOnSuccessListener {
+                    cargarTareas(rutina.id)
+                }
+        }
     }
 }
