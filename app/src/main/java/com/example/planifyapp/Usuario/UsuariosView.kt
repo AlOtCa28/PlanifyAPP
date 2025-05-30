@@ -172,8 +172,8 @@ fun UsuariosView(
 
                 TablonDeTareas(
                     tareas = tareas,
-                    onCompletarTarea = { tareaId ->
-                        gamificacionViewModel.completarTarea(emailUsuario, tareaId)
+                    onCompletarTarea = { tarea ->
+                        gamificacionViewModel.completarTarea(emailUsuario, tarea)
                     }
                 )
             }
@@ -185,7 +185,7 @@ fun UsuariosView(
 @Composable
 fun TablonDeTareas(
     tareas: List<TareaGamificada>,
-    onCompletarTarea: (String) -> Unit
+    onCompletarTarea: (TareaGamificada) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -212,7 +212,7 @@ fun TablonDeTareas(
                     Text(tarea.descripcion, style = MaterialTheme.typography.bodySmall)
                     if (!tarea.completada) {
                         Button(
-                            onClick = { onCompletarTarea(tarea.id) },
+                            onClick = {  onCompletarTarea(tarea)  },
                             modifier = Modifier.padding(top = 8.dp)
                         ) {
                             Text("Completar (+${tarea.puntos} pts)")

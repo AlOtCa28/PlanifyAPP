@@ -44,6 +44,7 @@ import com.google.firebase.auth.FirebaseAuth
 @Composable
 fun EstadisticasView(navController: NavHostController, gamificacionViewModel: GamificacionViewModel) {
     val tareas by gamificacionViewModel.tareas.collectAsState()
+    val tareasRutina by gamificacionViewModel.tareasRutina.collectAsState()
     val logros by gamificacionViewModel.logros.collectAsState()
     val tareasCompletadas = tareas.count { it.completada }
     val logrosObtenidos = logros.count { it.obtenido }
@@ -99,7 +100,7 @@ fun EstadisticasView(navController: NavHostController, gamificacionViewModel: Ga
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                     Text(
-                        "$tareasCompletadas / $totalTareas",
+                        "${tareas.count { it.completada } + tareasRutina.count { it.completada }} / ${tareas.size + tareasRutina.size}",
                         style = MaterialTheme.typography.displaySmall,
                         color = FuchsiaLight,
                         modifier = Modifier.align(Alignment.CenterHorizontally)

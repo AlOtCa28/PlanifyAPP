@@ -128,12 +128,12 @@ class UsuariosViewModel : ViewModel() {
                         }
                     }
 
-                    Log.e("LorenzoAD", "Usuarios -> " + Parametros.usuarios)
+                    Log.e("AlvaroOton", "Usuarios -> " + Parametros.usuarios)
                 } else {
-                    Log.e("LorenzoAD", "No se encontraron usuarios")
+                    Log.e("AlvaroOton", "No se encontraron usuarios")
                 }
             } catch (e: Exception) {
-                Log.e("LorenzoAD", "Error al obtener usuarios: ${e.message}")
+                Log.e("AlvaroOton", "Error al obtener usuarios: ${e.message}")
             }
         }
     }

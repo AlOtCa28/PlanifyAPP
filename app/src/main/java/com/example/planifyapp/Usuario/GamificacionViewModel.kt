@@ -3,6 +3,7 @@ package com.example.planifyapp.Usuario
 import Modelo.TareasYLogros.LogroGamificado
 import Modelo.TareasYLogros.TareaGamificada
 import Modelo.TareasYLogros.TareaGeneral
+import Modelo.Rutina.Tarea // Asegúrate de tener este import o el correcto para tus tareas de rutina
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.lifecycle.ViewModel
@@ -17,7 +18,6 @@ import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-
 class GamificacionViewModel : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
@@ -31,21 +31,27 @@ class GamificacionViewModel : ViewModel() {
     private val _puntosTotales = MutableStateFlow(0)
     val puntosTotales: StateFlow<Int> = _puntosTotales
 
+    // NUEVO: Para guardar tareas de rutina completadas
+    private val _tareasRutina = MutableStateFlow<List<Tarea>>(emptyList())
+    val tareasRutina: StateFlow<List<Tarea>> = _tareasRutina
+
     fun cargarDatos(emailUsuario: String) {
         // Cargar tareas generales
         db.collection("TareasGenerales").get().addOnSuccessListener { tareasSnapshot ->
-
             val tareasGenerales = tareasSnapshot.documents.mapNotNull { doc ->
                 doc.toObject(TareaGeneral::class.java)?.apply { id = doc.id }
             }
 
-
-            // Cargar progreso de tareas del usuario
+            // Cargar progreso de tareas del usuario (TareasCompletadas)
             db.collection("ProgresoUsuarios")
                 .document(emailUsuario)
                 .collection("TareasCompletadas")
                 .get()
                 .addOnSuccessListener { progresoTareasSnapshot ->
+
+                    val puntosTareasCompletadas = progresoTareasSnapshot.documents
+                        .filter { it.getBoolean("completada") == true }
+                        .sumOf { it.getLong("puntos")?.toInt() ?: 0 }
 
                     val progresoTareasMap = progresoTareasSnapshot.documents.associate { doc ->
                         doc.id to (doc.getBoolean("completada") ?: false)
@@ -53,7 +59,6 @@ class GamificacionViewModel : ViewModel() {
 
                     // Cargar logros generales
                     db.collection("LogrosGenerales").get().addOnSuccessListener { logrosSnapshot ->
-
                         val logrosGenerales = logrosSnapshot.documents.map { doc ->
                             val logro = doc.toObject(LogroGamificado::class.java)
                             logro?.id = doc.id
@@ -71,7 +76,6 @@ class GamificacionViewModel : ViewModel() {
                                     doc.id to (doc.getBoolean("obtenido") ?: false)
                                 }
 
-                                // Combinar tareas con progreso
                                 val listaTareasFinal = tareasGenerales.map { tarea ->
                                     TareaGamificada(
                                         id = tarea.id,
@@ -82,7 +86,6 @@ class GamificacionViewModel : ViewModel() {
                                     )
                                 }
 
-                                // Combinar logros con progreso
                                 val listaLogrosFinal = logrosGenerales.map { logro ->
                                     LogroGamificado(
                                         id = logro.id,
@@ -93,50 +96,82 @@ class GamificacionViewModel : ViewModel() {
                                     )
                                 }
 
-                                // Actualizar estados
-                                _tareas.value = listaTareasFinal
-                                _logros.value = listaLogrosFinal
+                                // Cargar todas las rutinas del usuario
+                                db.collection("Rutinas")
+                                    .whereEqualTo("emailUsuario", emailUsuario)
+                                    .get()
+                                    .addOnSuccessListener { rutinasSnapshot ->
+                                        val rutinas = rutinasSnapshot.documents
 
-                                // Calcular puntos totales sumando tareas y logros obtenidos
-                                val puntos = listaTareasFinal.filter { it.completada }.sumOf { it.puntos } +
-                                        listaLogrosFinal.filter { it.obtenido }.sumOf { it.puntos }
-                                _puntosTotales.value = puntos
+                                        val todasTareasRutina = mutableListOf<Tarea>()
+                                        var rutinasProcesadas = 0
+
+                                        if (rutinas.isEmpty()) {
+                                            _tareasRutina.value = emptyList()
+                                            _tareas.value = listaTareasFinal
+                                            _logros.value = listaLogrosFinal
+                                            _puntosTotales.value = puntosTareasCompletadas +
+                                                    listaLogrosFinal.filter { it.obtenido }.sumOf { it.puntos }
+                                            return@addOnSuccessListener
+                                        }
+
+                                        for (rutinaDoc in rutinas) {
+                                            rutinaDoc.reference.collection("Tareas")
+                                                .get()
+                                                .addOnSuccessListener { tareasSnapshot ->
+                                                    tareasSnapshot.documents.mapNotNullTo(todasTareasRutina) { doc ->
+                                                        doc.toObject(Tarea::class.java)?.apply { id = doc.id }
+                                                    }
+                                                    rutinasProcesadas++
+                                                    if (rutinasProcesadas == rutinas.size) {
+                                                        // Cuando ya se han procesado todas las rutinas, cargar completadas
+                                                        db.collection("ProgresoUsuarios")
+                                                            .document(emailUsuario)
+                                                            .collection("TareasRutinaCompletadas")
+                                                            .get()
+                                                            .addOnSuccessListener { tareasRutinaCompletadasSnapshot ->
+                                                                val idsCompletadas = tareasRutinaCompletadasSnapshot.documents.map { it.id }.toSet()
+                                                                val listaTareasRutinaFinal = todasTareasRutina.map { tarea ->
+                                                                    tarea.copy(completada = idsCompletadas.contains(tarea.id))
+                                                                }
+                                                                _tareasRutina.value = listaTareasRutinaFinal
+
+                                                                val puntos = puntosTareasCompletadas +
+                                                                        listaLogrosFinal.filter { it.obtenido }.sumOf { it.puntos } +
+                                                                        listaTareasRutinaFinal.filter { it.completada }.sumOf { it.puntos }
+                                                                _tareas.value = listaTareasFinal
+                                                                _logros.value = listaLogrosFinal
+                                                                _puntosTotales.value = puntos
+                                                            }
+                                                    }
+                                                }
+                                        }
+                                    }
                             }
                     }
                 }
         }
     }
 
-    fun completarTarea(emailUsuario: String, idTarea: String) {
+    fun completarTarea(emailUsuario: String, tarea: TareaGamificada) {
         db.collection("ProgresoUsuarios")
             .document(emailUsuario)
             .collection("TareasCompletadas")
-            .document(idTarea)
+            .document(tarea.id)
             .set(
                 mapOf(
+                    "id" to tarea.id,
+                    "titulo" to tarea.titulo,
+                    "descripcion" to tarea.descripcion,
+                    "puntos" to tarea.puntos,
                     "completada" to true,
                     "fechaCompletada" to FieldValue.serverTimestamp()
                 )
-            ).addOnSuccessListener {
+            )
+            .addOnSuccessListener {
                 cargarDatos(emailUsuario)
             }
     }
-
-    fun obtenerLogro(emailUsuario: String, idLogro: String) {
-        db.collection("ProgresoUsuarios")
-            .document(emailUsuario)
-            .collection("LogrosObtenidos")
-            .document(idLogro)
-            .set(
-                mapOf(
-                    "obtenido" to true,
-                    "fechaObtenido" to FieldValue.serverTimestamp()
-                )
-            ).addOnSuccessListener {
-                cargarDatos(emailUsuario)
-            }
-    }
-
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun descargarImagenDesdeFirebase(correo: String): Bitmap? = suspendCancellableCoroutine { continuation ->
         val localFile = File.createTempFile("tempImage", "jpeg")
@@ -151,5 +186,4 @@ class GamificacionViewModel : ViewModel() {
             continuation.resumeWithException(exception)
         }
     }
-
 }

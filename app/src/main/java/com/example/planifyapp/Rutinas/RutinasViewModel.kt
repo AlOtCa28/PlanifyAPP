@@ -4,6 +4,8 @@ import Modelo.Rutina.Rutina
 import Modelo.Rutina.Tarea
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.makefriendsapp.Auxiliar.Parametros
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +24,8 @@ class RutinasViewModel : ViewModel() {
 
     private val _rutinaSeleccionada = MutableStateFlow<Rutina?>(null)
     val rutinaSeleccionada: StateFlow<Rutina?> = _rutinaSeleccionada
+
+    private var emailUsuario: String = ""
 
     fun cargarRutinaPorId(rutinaId: String) {
         db.collection("Rutinas").document(rutinaId).get()
@@ -116,17 +120,47 @@ class RutinasViewModel : ViewModel() {
             .addOnFailureListener { e -> onComplete(false, e.message) }
     }
 
-    fun marcarTareaCompletada(tareaId: String, checked: Boolean) {
-        val rutina = _rutinaSeleccionada.value
-        if (rutina != null && tareaId.isNotEmpty()) {
-            db.collection("Rutinas")
-                .document(rutina.id)
-                .collection("Tareas")
-                .document(tareaId)
-                .update("completada", checked)
-                .addOnSuccessListener {
-                    cargarTareas(rutina.id)
+    fun marcarTareaCompletada(tarea: Tarea, completada: Boolean) {
+        val rutina = _rutinaSeleccionada.value ?: return
+        val email = Parametros.usuarioLogged?.correo ?: return
+
+        val tareaRef = db.collection("Rutinas")
+            .document(rutina.id)
+            .collection("Tareas")
+            .document(tarea.id)
+
+        tareaRef.update("completada", completada).addOnSuccessListener {
+            cargarTareas(rutina.id)
+
+            if (completada) {
+                val progresoRef = db.collection("ProgresoUsuarios")
+                    .document(email)
+                    .collection("TareasRutinaCompletadas")
+                    .document(tarea.id)
+
+                progresoRef.get().addOnSuccessListener { docSnapshot ->
+                    if (!docSnapshot.exists()) {
+                        // Guarda todos los campos de la tarea
+                        progresoRef.set(
+                            mapOf(
+                                "id" to tarea.id,
+                                "titulo" to tarea.titulo,
+                                "descripcion" to tarea.descripcion,
+                                "puntos" to tarea.puntos,
+                                "completada" to true,
+                                "fechaCompletada" to FieldValue.serverTimestamp()
+                            )
+                        ).addOnSuccessListener {
+                            val usuarioRef = db.collection("Usuarios").document(email)
+                            usuarioRef.update("puntos", FieldValue.increment(tarea.puntos.toLong()))
+                        }
+                    }
                 }
+            }
         }
+    }
+
+    fun setEmailUsuario(email: String) {
+        emailUsuario = email
     }
 }

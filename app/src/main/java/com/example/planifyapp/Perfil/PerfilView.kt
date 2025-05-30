@@ -64,6 +64,7 @@ fun PerfilView(navController: NavHostController, gamificacionViewModel: Gamifica
     val user = FirebaseAuth.getInstance().currentUser
     val puntos by gamificacionViewModel.puntosTotales.collectAsState()
     val tareas by gamificacionViewModel.tareas.collectAsState()
+    val tareasRutina by gamificacionViewModel.tareasRutina.collectAsState()
     val logros by gamificacionViewModel.logros.collectAsState()
     var fotoPerfil by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
@@ -167,7 +168,7 @@ fun PerfilView(navController: NavHostController, gamificacionViewModel: Gamifica
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                     Text(
-                        "${tareas.count { it.completada }}",
+                        "${tareas.count { it.completada } + tareasRutina.count { it.completada }}",
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )

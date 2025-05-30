@@ -122,7 +122,7 @@ fun DetalleRutinaView(
                                     androidx.compose.material3.Switch(
                                         checked = tarea.completada,
                                         onCheckedChange = { isChecked ->
-                                            rutinasViewModel.marcarTareaCompletada(tarea.id, isChecked)
+                                            rutinasViewModel.marcarTareaCompletada(tarea, isChecked)
                                         },
                                         colors = androidx.compose.material3.SwitchDefaults.colors(
                                             checkedThumbColor = FuchsiaStrong
