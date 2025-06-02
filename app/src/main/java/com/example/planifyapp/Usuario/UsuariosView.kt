@@ -51,6 +51,7 @@ import com.example.makefriendsapp.Enrutamiento.Rutas
 import com.example.makefriendsapp.ListadoAmigos.UsuariosViewModel
 import com.example.makefriendsapp.Modelo.Menu.OpcionMenu
 import com.example.planifyapp.Usuario.GamificacionViewModel
+import com.example.planifyapp.programarNotificaciones
 import com.example.planifyapp.ui.theme.DarkBackground
 import com.example.planifyapp.ui.theme.FuchsiaLight
 import com.google.firebase.auth.FirebaseAuth
@@ -149,12 +150,12 @@ fun UsuariosView(
         ) { innerPadding ->
             val gamificacionViewModel: GamificacionViewModel = viewModel()
             val tareas by gamificacionViewModel.tareas.collectAsState()
-            val puntosTotales by gamificacionViewModel.puntosTotales.collectAsState()
             val emailUsuario = FirebaseAuth.getInstance().currentUser?.email ?: ""
 
             LaunchedEffect(emailUsuario) {
                 if (emailUsuario.isNotEmpty()) {
                     gamificacionViewModel.cargarDatos(emailUsuario)
+                    programarNotificaciones(emailUsuario, context)
                 }
             }
 

@@ -6,10 +6,13 @@ import ListadoAmant.UsuariosView
 import Registro.RegistroView
 import Registro.RegistroViewModel
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -47,12 +51,29 @@ import com.example.planifyapp.Tareas.NuevaTareaView
 import com.example.planifyapp.Usuario.GamificacionViewModel
 import com.example.planifyapp.ui.theme.PlanifyAPPTheme
 import com.google.firebase.auth.FirebaseAuth
+import android.Manifest
+import android.content.Context
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.Data
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean -> }
+
     @SuppressLint("ViewModelConstructorInComposable")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
         setContent {
             PlanifyAPPTheme {
                 Surface(
@@ -185,4 +206,20 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+fun programarNotificaciones(emailUsuario: String, context: Context) {
+    val datos = Data.Builder()
+        .putString("emailUsuario", emailUsuario)
+        .build()
+
+    val workRequest = PeriodicWorkRequestBuilder<com.example.planifyapp.Auxiliar.NotificacionWorker>(15, TimeUnit.MINUTES)
+        .setInputData(datos)
+        .build()
+
+    WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+        "NotificacionesRutinasEventos",
+        androidx.work.ExistingPeriodicWorkPolicy.UPDATE,
+        workRequest
+    )
 }

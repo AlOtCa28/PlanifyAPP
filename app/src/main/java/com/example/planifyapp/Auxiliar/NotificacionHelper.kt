@@ -1,77 +1,45 @@
 package com.example.planifyapp.Auxiliar
 
-import Modelo.EventoImportante.EventoImportante
-import Modelo.Rutina.Rutina
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.workDataOf
-import java.util.Calendar
-import java.util.concurrent.TimeUnit
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 
-object NotificacionHelper {
+class NotificacionHelper(private val context: Context) {
 
-    fun programarNotificacionEvento(context: Context, evento: EventoImportante) {
-        val diasAntes = 7
-        val fechaNotificacion = evento.fechaEvento - TimeUnit.DAYS.toMillis(diasAntes.toLong())
-        val retraso = fechaNotificacion - System.currentTimeMillis()
+    private val canalId = "canal_eventos"
 
-        if (retraso <= 0) return // No se programa si ya ha pasado la fecha
+    init {
+        crearCanal()
+    }
 
-        val data = workDataOf(
-            "titulo" to "Próximo evento: ${evento.titulo}",
-            "mensaje" to evento.descripcion,
-            "id" to evento.id.hashCode()
-        )
+    private fun crearCanal() {
+        val canal = NotificationChannel(
+            canalId,
+            "Eventos y Rutinas",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Notificaciones de eventos importantes y rutinas diarias"
+        }
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(canal)
+    }
 
-        val notificacionRequest = OneTimeWorkRequestBuilder<NotificacionWorker>()
-            .setInitialDelay(retraso, TimeUnit.MILLISECONDS)
-            .setInputData(data)
+    fun mostrarNotificacion(titulo: String, mensaje: String) {
+        val notificacion = NotificationCompat.Builder(context, canalId)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(titulo)
+            .setContentText(mensaje)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
             .build()
 
-        WorkManager.getInstance(context).enqueue(notificacionRequest)
-    }
-
-    fun programarNotificacionDiaria(context: Context, rutina: Rutina) {
-        val hora = rutina.horaNotificacion.split(":").map { it.toInt() }
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hora[0])
-            set(Calendar.MINUTE, hora[1])
-            set(Calendar.SECOND, 0)
-            if (before(Calendar.getInstance())) add(Calendar.DAY_OF_YEAR, 1)
-        }
-
-        val retrasoInicial = calendar.timeInMillis - System.currentTimeMillis()
-
-        val data = workDataOf(
-            "titulo" to "Planificación diaria",
-            "mensaje" to "Revisa tu rutina: ${rutina.titulo}",
-            "id" to rutina.id.hashCode()
-        )
-
-        val notificacionDiaria = PeriodicWorkRequestBuilder<NotificacionWorker>(1, TimeUnit.DAYS)
-            .setInitialDelay(retrasoInicial, TimeUnit.MILLISECONDS)
-            .setInputData(data)
-            .build()
-
-        WorkManager.getInstance(context).enqueue(notificacionDiaria)
-    }
-
-
-    fun crearCanalNotificaciones(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val canal = NotificationChannel(
-                "canal_eventos",
-                "Eventos y Rutinas",
-                NotificationManager.IMPORTANCE_HIGH
-            )
-            val manager = context.getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(canal)
+        // Comprobar permiso antes de notificar
+        if (context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            NotificationManagerCompat.from(context).notify(System.currentTimeMillis().toInt(), notificacion)
         }
     }
-
 }
