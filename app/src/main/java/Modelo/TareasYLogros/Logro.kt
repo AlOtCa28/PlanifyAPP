@@ -6,5 +6,6 @@ data class Logro(
     var id: String = "",
     var titulo: String = "",
     var descripcion: String = "",
-    var puntos: Int = 0
-) :Serializable
+    var puntos: Int = 0,
+    var tipo: TipoLogro = TipoLogro.GENERAL // Añadido campo tipo
+) : Serializable

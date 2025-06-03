@@ -160,7 +160,6 @@ fun GestionLogrosView(
                     items(logros) { logro ->
                         ItemLogro(logro, adminViewModel)
                     }
-
                     item {
                         Spacer(modifier = Modifier.height(80.dp))
                     }
@@ -185,6 +184,7 @@ fun ItemLogro(
             Text(logro.titulo, style = MaterialTheme.typography.titleLarge)
             Text(logro.descripcion, style = MaterialTheme.typography.bodyMedium)
             Text("Puntos necesarios: ${logro.puntos}", style = MaterialTheme.typography.bodySmall)
+            Text("Tipo: ${logro.tipo.name}", style = MaterialTheme.typography.bodySmall)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -204,6 +204,5 @@ fun ItemLogro(
         }
     }
 }
-
 
 

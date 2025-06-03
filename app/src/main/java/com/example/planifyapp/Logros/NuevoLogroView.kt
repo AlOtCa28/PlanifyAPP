@@ -2,11 +2,15 @@ package com.example.planifyapp.Logros
 
 import ListadoAdmin.AdminViewModel
 import Modelo.TareasYLogros.Logro
+import Modelo.TareasYLogros.TipoLogro
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +33,8 @@ fun NuevoLogroView(
     var titulo by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
     var puntos by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+    var tipoSeleccionado by remember { mutableStateOf(TipoLogro.GENERAL) }
 
     Box(
         modifier = Modifier
@@ -83,6 +89,47 @@ fun NuevoLogroView(
                     cursorColor = FuchsiaStrong
                 )
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Tipo de logro:", color = DarkBackground, style = MaterialTheme.typography.bodyLarge)
+
+            Box {
+                OutlinedTextField(
+                    value = tipoSeleccionado.name,
+                    onValueChange = {},
+                    label = { Text("Tipo de Logro", color = DarkBackground) },
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Seleccionar tipo",
+                            modifier = Modifier.clickable { expanded = true }
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = FuchsiaStrong,
+                        unfocusedBorderColor = DarkBackground,
+                        cursorColor = FuchsiaStrong
+                    )
+                )
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    TipoLogro.values().forEach { tipo ->
+                        DropdownMenuItem(
+                            text = { Text(tipo.name) },
+                            onClick = {
+                                tipoSeleccionado = tipo
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -92,7 +139,7 @@ fun NuevoLogroView(
                     onClick = {
                         val puntosInt = puntos.toIntOrNull() ?: 0
                         if (titulo.isNotBlank() && descripcion.isNotBlank() && puntosInt > 0) {
-                            val nuevoLogro = Logro("", titulo, descripcion, puntosInt)
+                            val nuevoLogro = Logro("", titulo, descripcion, puntosInt, tipoSeleccionado)
                             adminViewModel.crearLogro(nuevoLogro) { exito ->
                                 if (exito) {
                                     Toast.makeText(context, "Logro creado correctamente", Toast.LENGTH_SHORT).show()

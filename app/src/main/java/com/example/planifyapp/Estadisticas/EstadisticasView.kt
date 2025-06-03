@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -97,26 +98,31 @@ fun EstadisticasView(navController: NavHostController, gamificacionViewModel: Ga
                         "Tareas completadas",
                         style = MaterialTheme.typography.titleMedium,
                         color = DarkBackground,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth()
+                            .align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                     Text(
                         "${tareas.count { it.completada } + tareasRutina.count { it.completada }} / ${tareas.size + tareasRutina.size}",
                         style = MaterialTheme.typography.displaySmall,
                         color = FuchsiaLight,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         "Logros obtenidos",
                         style = MaterialTheme.typography.titleMedium,
                         color = DarkBackground,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                     Text(
                         "$logrosObtenidos / $totalLogros",
                         style = MaterialTheme.typography.displaySmall,
                         color = FuchsiaLight,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                 }
             }

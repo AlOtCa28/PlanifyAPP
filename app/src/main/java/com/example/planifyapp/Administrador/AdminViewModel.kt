@@ -2,6 +2,7 @@ package ListadoAdmin
 
 import Conexion.Conexiones
 import Modelo.TareasYLogros.Logro
+import Modelo.TareasYLogros.LogroGamificado
 import Modelo.TareasYLogros.TareaGamificada
 import Modelo.TareasYLogros.TareaGeneral
 import Modelo.Usuario.Usuario
@@ -26,32 +27,12 @@ import kotlinx.coroutines.tasks.await
 
 class AdminViewModel : ViewModel() {
 
-    private val _cv_isLongClick = MutableLiveData<Boolean>()
-    val cv_isLongClick : LiveData<Boolean> = _cv_isLongClick
-
-    private val _cv_isClick = MutableLiveData<Boolean>()
-    val cv_isClick : LiveData<Boolean> = _cv_isClick
-
-    private val _showDialog = MutableLiveData<Boolean>()
-    val showDialog: LiveData<Boolean> = _showDialog
-
     private val _showDialogPersona = MutableLiveData<Boolean>()
     val showDialogPersona : LiveData<Boolean> = _showDialogPersona
 
     private val _isMenuExpanded = MutableLiveData<Boolean>()
     val isMenuExpanded : LiveData<Boolean> = _isMenuExpanded
 
-    private val _switchStates = mutableStateListOf<Boolean>()
-    val switchStates: List<Boolean> get() = _switchStates
-
-    private val _cbAdminStaes = mutableStateListOf<Boolean>()
-    val cbAdminStates : List<Boolean> get() = _cbAdminStaes
-
-    private val _cbAmanteStates = mutableStateListOf<Boolean>()
-    val cbAmanteStates : List<Boolean> get() = _cbAmanteStates
-
-    private val _isCBAmanteCheckedMap = MutableLiveData<Boolean>()
-    val isCBAmanteCheckedMap : LiveData<Boolean>  = _isCBAmanteCheckedMap
 
     private val _selectedItemOpcionMenu = MutableLiveData<OpcionMenu>()
     val selectedItemOpcionMneu : LiveData<OpcionMenu> = _selectedItemOpcionMenu
@@ -59,8 +40,6 @@ class AdminViewModel : ViewModel() {
     private val _userSelected = MutableLiveData<String>()
     val userSelected : LiveData<String> = _userSelected
 
-    private val _userDialog = MutableLiveData<Usuario>()
-    val userDialog : LiveData<Usuario> = _userDialog
 
     private val _usuarios = mutableStateListOf<Usuario>()
     val usuarios : SnapshotStateList<Usuario> get() = _usuarios
@@ -73,6 +52,9 @@ class AdminViewModel : ViewModel() {
     private val _logrosGenerales = MutableStateFlow<List<Logro>>(emptyList())
     val logrosGenerales = _logrosGenerales.asStateFlow()
 
+    private val _logrosObtenidos = MutableStateFlow<List<LogroGamificado>>(emptyList())
+    val logrosObtenidos: StateFlow<List<LogroGamificado>> = _logrosObtenidos
+
 
     init {
         obtenerUsuarios()
@@ -80,65 +62,9 @@ class AdminViewModel : ViewModel() {
         cargarLogrosGenerales()
     }
 
-    fun initializeSwitchStates(usuarios: List<Usuario>) {
-        _switchStates.clear()
-        usuarios.forEach { usuario ->
-            _switchStates.add(usuario.isActivo)
-        }
-    }
-
-    fun initializeCBAdminStates(usuarios: List<Usuario>){
-        _cbAdminStaes.clear()
-        usuarios.forEach { usuario ->
-            _cbAdminStaes.add(usuario.roles.contains(0))
-        }
-    }
-
-    fun initializeCBAmanteStates(usuarios: List<Usuario>){
-        _cbAmanteStates.clear()
-        usuarios.forEach { usuario ->
-            _cbAmanteStates.add(usuario.roles.contains(1))
-        }
-    }
 
     fun onSelectedItemMenuChange(opcion : OpcionMenu){
         _selectedItemOpcionMenu.value = opcion
-    }
-
-    fun onUserSelected(user : String){
-        _userSelected.value = user
-    }
-
-    fun onExpandMenu(){
-        _isMenuExpanded.value = true
-    }
-
-    fun onLongClick(){
-        _cv_isLongClick.value = true
-    }
-
-    fun onClick(){
-        _cv_isClick.value = true
-    }
-
-    fun onCBAmanteChangeValue(i : Int, valor: Boolean) {
-        _isCBAmanteCheckedMap.value = valor
-    }
-
-    fun onShowDilaog(){
-        _showDialog.value = true
-    }
-
-    fun onCloseDialog(){
-        _showDialog.value = false
-    }
-
-    fun onShowDialogPersona(){
-        _showDialogPersona.value = true
-    }
-
-    fun onCloseDialogPersona(){
-        _showDialogPersona.value = false
     }
 
     fun activarUsuario(correo : String, valor : Boolean){
@@ -173,10 +99,6 @@ class AdminViewModel : ViewModel() {
             }
             removeRolJon.join()
         }
-    }
-
-    fun setUserDialog(u : Usuario){
-        _userDialog.value = u
     }
 
     fun obtenerUsuarios() {
@@ -223,25 +145,6 @@ class AdminViewModel : ViewModel() {
         }
     }
 
-    fun updateSwitchState(index: Int, value: Boolean) {
-        _switchStates[index] = value
-    }
-
-    fun updateCBAdminState(index: Int, value: Boolean){
-        _cbAdminStaes[index] = value
-    }
-
-    fun updateCBAmanteState(index: Int, value: Boolean){
-        _cbAmanteStates[index] = value
-    }
-
-    fun eliminarUsuario(nombre: String, callback: (Boolean) -> Unit) {
-        Conexiones.eliminarUsuarioPorNombre(nombre){
-            callback(it)
-
-        }
-    }
-
     fun cargarTareasGenerales() {
         viewModelScope.launch {
             try {
@@ -256,15 +159,20 @@ class AdminViewModel : ViewModel() {
         }
     }
 
-    fun cargarLogrosGenerales() {
-        Conexiones.obtenerLogrosGenerales()
-            .addOnSuccessListener {
-                val logros = it.documents.mapNotNull { doc ->
-                    doc.toObject(Logro::class.java)?.copy(id = doc.id)
-                }
-                _logrosGenerales.value = logros
-            }
+    fun cargarLogrosObtenidos(correo: String) {
+        Conexiones.obtenerLogrosObtenidos(correo) { lista ->
+            _logrosObtenidos.value = lista
+        }
     }
+
+
+    fun cargarLogrosGenerales() {
+        Conexiones.obtenerLogrosGenerales { lista ->
+            _logrosGenerales.value = lista
+        }
+    }
+
+
 
     fun crearLogro(logro: Logro, onComplete: (Boolean) -> Unit) {
         val docRef = Conexiones.db.collection("LogrosGenerales").document()

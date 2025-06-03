@@ -7,12 +7,14 @@ import Modelo.Rutina.Tarea // Asegúrate de tener este import o el correcto para
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.lifecycle.ViewModel
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import kotlin.coroutines.resume
@@ -31,18 +33,26 @@ class GamificacionViewModel : ViewModel() {
     private val _puntosTotales = MutableStateFlow(0)
     val puntosTotales: StateFlow<Int> = _puntosTotales
 
+    private val _logroConseguidoEvento = MutableStateFlow<LogroGamificado?>(null)
+    val logroConseguidoEvento = _logroConseguidoEvento.asStateFlow()
+
     // NUEVO: Para guardar tareas de rutina completadas
     private val _tareasRutina = MutableStateFlow<List<Tarea>>(emptyList())
     val tareasRutina: StateFlow<List<Tarea>> = _tareasRutina
 
+    fun limpiarEvento() {
+        _logroConseguidoEvento.value = null
+    }
+
+
     fun cargarDatos(emailUsuario: String) {
-        // Cargar tareas generales
+        // Cargar tareas generales (igual que antes)
         db.collection("TareasGenerales").get().addOnSuccessListener { tareasSnapshot ->
             val tareasGenerales = tareasSnapshot.documents.mapNotNull { doc ->
                 doc.toObject(TareaGeneral::class.java)?.apply { id = doc.id }
             }
 
-            // Cargar progreso de tareas del usuario (TareasCompletadas)
+            // Cargar progreso de tareas del usuario (igual que antes)
             db.collection("ProgresoUsuarios")
                 .document(emailUsuario)
                 .collection("TareasCompletadas")
@@ -65,38 +75,28 @@ class GamificacionViewModel : ViewModel() {
                             logro!!
                         }
 
-                        // Cargar progreso de logros del usuario
+                        // Cargar progreso completo de logros del usuario (con toda la info)
                         db.collection("ProgresoUsuarios")
                             .document(emailUsuario)
                             .collection("LogrosObtenidos")
                             .get()
                             .addOnSuccessListener { progresoLogrosSnapshot ->
 
-                                val progresoLogrosMap = progresoLogrosSnapshot.documents.associate { doc ->
-                                    doc.id to (doc.getBoolean("obtenido") ?: false)
+                                val logrosObtenidos = progresoLogrosSnapshot.documents.mapNotNull { doc ->
+                                    doc.toObject(LogroGamificado::class.java)?.apply { id = doc.id }
                                 }
 
-                                val listaTareasFinal = tareasGenerales.map { tarea ->
-                                    TareaGamificada(
-                                        id = tarea.id,
-                                        titulo = tarea.titulo,
-                                        descripcion = tarea.descripcion,
-                                        puntos = tarea.puntos,
-                                        completada = progresoTareasMap[tarea.id] ?: false
-                                    )
+                                // Combinar logros generales con progreso obtenido
+                                val listaLogrosFinal = logrosGenerales.map { logroGeneral ->
+                                    val logroObtenido = logrosObtenidos.find { it.id == logroGeneral.id }
+                                    if (logroObtenido != null) {
+                                        logroObtenido
+                                    } else {
+                                        logroGeneral.copy(obtenido = false)
+                                    }
                                 }
 
-                                val listaLogrosFinal = logrosGenerales.map { logro ->
-                                    LogroGamificado(
-                                        id = logro.id,
-                                        titulo = logro.titulo,
-                                        descripcion = logro.descripcion,
-                                        puntos = logro.puntos,
-                                        obtenido = progresoLogrosMap[logro.id] ?: false
-                                    )
-                                }
-
-                                // Cargar todas las rutinas del usuario
+                                // Cargar todas las rutinas del usuario (igual que antes)
                                 db.collection("Rutinas")
                                     .whereEqualTo("emailUsuario", emailUsuario)
                                     .get()
@@ -108,7 +108,15 @@ class GamificacionViewModel : ViewModel() {
 
                                         if (rutinas.isEmpty()) {
                                             _tareasRutina.value = emptyList()
-                                            _tareas.value = listaTareasFinal
+                                            _tareas.value = tareasGenerales.map { tarea ->
+                                                TareaGamificada(
+                                                    id = tarea.id,
+                                                    titulo = tarea.titulo,
+                                                    descripcion = tarea.descripcion,
+                                                    puntos = tarea.puntos,
+                                                    completada = progresoTareasMap[tarea.id] ?: false
+                                                )
+                                            }
                                             _logros.value = listaLogrosFinal
                                             _puntosTotales.value = puntosTareasCompletadas +
                                                     listaLogrosFinal.filter { it.obtenido }.sumOf { it.puntos }
@@ -124,7 +132,6 @@ class GamificacionViewModel : ViewModel() {
                                                     }
                                                     rutinasProcesadas++
                                                     if (rutinasProcesadas == rutinas.size) {
-                                                        // Cuando ya se han procesado todas las rutinas, cargar completadas
                                                         db.collection("ProgresoUsuarios")
                                                             .document(emailUsuario)
                                                             .collection("TareasRutinaCompletadas")
@@ -139,12 +146,21 @@ class GamificacionViewModel : ViewModel() {
                                                                 val puntos = puntosTareasCompletadas +
                                                                         listaLogrosFinal.filter { it.obtenido }.sumOf { it.puntos } +
                                                                         listaTareasRutinaFinal.filter { it.completada }.sumOf { it.puntos }
-                                                                _tareas.value = listaTareasFinal
+                                                                _tareas.value = tareasGenerales.map { tarea ->
+                                                                    TareaGamificada(
+                                                                        id = tarea.id,
+                                                                        titulo = tarea.titulo,
+                                                                        descripcion = tarea.descripcion,
+                                                                        puntos = tarea.puntos,
+                                                                        completada = progresoTareasMap[tarea.id] ?: false
+                                                                    )
+                                                                }
                                                                 _logros.value = listaLogrosFinal
                                                                 _puntosTotales.value = puntos
                                                             }
                                                     }
                                                 }
+
                                         }
                                     }
                             }
@@ -172,6 +188,8 @@ class GamificacionViewModel : ViewModel() {
                 cargarDatos(emailUsuario)
             }
     }
+
+
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun descargarImagenDesdeFirebase(correo: String): Bitmap? = suspendCancellableCoroutine { continuation ->
         val localFile = File.createTempFile("tempImage", "jpeg")
@@ -186,4 +204,6 @@ class GamificacionViewModel : ViewModel() {
             continuation.resumeWithException(exception)
         }
     }
+
+
 }

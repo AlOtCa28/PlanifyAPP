@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -141,48 +142,56 @@ fun PerfilView(navController: NavHostController, gamificacionViewModel: Gamifica
                         "Correo:",
                         style = MaterialTheme.typography.titleSmall,
                         color = DarkBackground,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                     Text(
                         "${user?.email}",
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         "Puntos:",
                         style = MaterialTheme.typography.titleSmall,
                         color = DarkBackground,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                     Text(
                         "$puntos",
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         "Tareas completadas:",
                         style = MaterialTheme.typography.titleSmall,
                         color = DarkBackground,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                     Text(
                         "${tareas.count { it.completada } + tareasRutina.count { it.completada }}",
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         "Logros obtenidos:",
                         style = MaterialTheme.typography.titleSmall,
                         color = DarkBackground,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                     Text(
                         "${logros.count { it.obtenido }}",
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
                     )
                 }
             }

@@ -2,6 +2,7 @@ package Conexion
 
 
 import Modelo.TareasYLogros.Logro
+import Modelo.TareasYLogros.LogroGamificado
 import Modelo.TareasYLogros.TareaGeneral
 import Modelo.Usuario.Usuario
 import android.annotation.SuppressLint
@@ -12,6 +13,7 @@ import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -236,11 +238,63 @@ object Conexiones {
             }
     }
 
-    fun obtenerLogrosGenerales(): Task<QuerySnapshot> {
-        return FirebaseFirestore.getInstance()
+    fun obtenerLogrosGenerales(onResult: (List<Logro>) -> Unit) {
+        FirebaseFirestore.getInstance()
             .collection("LogrosGenerales")
             .get()
+            .addOnSuccessListener { snapshot ->
+                val logros = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(Logro::class.java)
+                }
+                onResult(logros)
+            }
+            .addOnFailureListener {
+                onResult(emptyList())
+            }
     }
+
+
+    fun guardarLogroConseguido(correo: String, logro: LogroGamificado, onResult: (Boolean) -> Unit) {
+        val logroMap = hashMapOf(
+            "id" to logro.id,
+            "titulo" to logro.titulo,
+            "descripcion" to logro.descripcion,
+            "puntos" to logro.puntos,
+            "tipo" to logro.tipo.name,
+            "obtenido" to true,
+            "fechaObtenido" to Timestamp.now()
+        )
+
+        FirebaseFirestore.getInstance()
+            .collection("ProgresoUsuarios")
+            .document(correo)
+            .collection("LogrosConseguidos")
+            .document(logro.id)
+            .set(logroMap)
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
+    }
+
+    fun obtenerLogrosObtenidos(
+        correoUsuario: String,
+        onResult: (List<LogroGamificado>) -> Unit
+    ) {
+        FirebaseFirestore.getInstance()
+            .collection("ProgresoUsuarios")
+            .document(correoUsuario)
+            .collection("LogrosObtenidos")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val logros = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(LogroGamificado::class.java)
+                }
+                onResult(logros)
+            }
+            .addOnFailureListener {
+                onResult(emptyList())
+            }
+    }
+
 
 
     fun eliminarLogroPorId(id: String): Task<Void> {
