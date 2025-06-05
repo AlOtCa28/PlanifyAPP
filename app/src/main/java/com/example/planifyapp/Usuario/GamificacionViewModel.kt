@@ -1,9 +1,13 @@
 package com.example.planifyapp.Usuario
 
+import Auxiliar.Factorias.diaANombre
 import Modelo.TareasYLogros.LogroGamificado
 import Modelo.TareasYLogros.TareaGamificada
 import Modelo.TareasYLogros.TareaGeneral
 import Modelo.Rutina.Tarea // Asegúrate de tener este import o el correcto para tus tareas de rutina
+import Modelo.Sugerencia.Sugerencia
+import Modelo.TareasYLogros.Logro
+import Modelo.TareasYLogros.TipoLogro
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.lifecycle.ViewModel
@@ -17,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
+import java.util.Calendar
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -35,6 +40,9 @@ class GamificacionViewModel : ViewModel() {
 
     private val _logroConseguidoEvento = MutableStateFlow<LogroGamificado?>(null)
     val logroConseguidoEvento = _logroConseguidoEvento.asStateFlow()
+
+    private val _sugerencias = MutableStateFlow<List<Sugerencia>>(emptyList())
+    val sugerencias: StateFlow<List<Sugerencia>> = _sugerencias
 
     // NUEVO: Para guardar tareas de rutina completadas
     private val _tareasRutina = MutableStateFlow<List<Tarea>>(emptyList())
@@ -169,6 +177,61 @@ class GamificacionViewModel : ViewModel() {
         }
     }
 
+
+    fun generarSugerencias(emailUsuario: String) {
+        db.collection("ProgresoUsuarios")
+            .document(emailUsuario)
+            .collection("TareasCompletadas")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val nuevasSugerencias = mutableListOf<Sugerencia>()
+                val diasContador = mutableMapOf<Int, Int>()
+                val horasContador = mutableMapOf<Int, Int>()
+
+                for (doc in snapshot.documents) {
+                    val timestamp = doc.getTimestamp("fechaCompletada")?.toDate()
+                    timestamp?.let {
+                        val cal = Calendar.getInstance().apply { time = it }
+                        val dia = cal.get(Calendar.DAY_OF_WEEK)
+                        val hora = cal.get(Calendar.HOUR_OF_DAY)
+
+                        diasContador[dia] = diasContador.getOrDefault(dia, 0) + 1
+                        horasContador[hora] = horasContador.getOrDefault(hora, 0) + 1
+                    }
+                }
+
+                val mejorDia = diasContador.maxByOrNull { it.value }?.key
+                val mejorHora = horasContador.maxByOrNull { it.value }?.key
+
+                mejorDia?.let {
+                    nuevasSugerencias.add(
+                        Sugerencia(
+                            tipo = "rutina",
+                            titulo = "Nueva rutina para tu día más productivo",
+                            descripcion = "Te va bien trabajar ese día. Crea una rutina semanal ahí.",
+                            motivo = "Basado en tus hábitos, el día ${diaANombre(it)} es donde más completas tareas."
+                        )
+                    )
+                }
+
+                mejorHora?.let {
+                    nuevasSugerencias.add(
+                        Sugerencia(
+                            tipo = "tarea",
+                            titulo = "Añade tareas a tu hora favorita",
+                            descripcion = "Podrías planear más cosas para esa hora del día.",
+                            motivo = "La hora ${it}:00 es cuando más tareas completas."
+                        )
+                    )
+                }
+
+                _sugerencias.value = nuevasSugerencias
+            }
+            .addOnFailureListener {
+                _sugerencias.value = emptyList()
+            }
+    }
+
     fun completarTarea(emailUsuario: String, tarea: TareaGamificada) {
         db.collection("ProgresoUsuarios")
             .document(emailUsuario)
@@ -185,7 +248,61 @@ class GamificacionViewModel : ViewModel() {
                 )
             )
             .addOnSuccessListener {
+                comprobarLogros(emailUsuario)
                 cargarDatos(emailUsuario)
+            }
+    }
+
+    fun comprobarLogros(emailUsuario: String) {
+        // Obtener tareas completadas
+        db.collection("ProgresoUsuarios")
+            .document(emailUsuario)
+            .collection("TareasCompletadas")
+            .get()
+            .addOnSuccessListener { tareasSnapshot ->
+                val tareasCompletadasCount = tareasSnapshot.documents.count { it.getBoolean("completada") == true }
+
+                // Obtener logros generales
+                db.collection("LogrosGenerales")
+                    .get()
+                    .addOnSuccessListener { logrosSnapshot ->
+
+                        for (doc in logrosSnapshot.documents) {
+                            val logro = doc.toObject(Logro::class.java)?.apply { id = doc.id }
+                            if (logro != null && logro.tipo == TipoLogro.PUNTUAL) {
+                                if (logro.titulo.contains("SANGUINARIO") && tareasCompletadasCount >= 5) {
+                                    db.collection("ProgresoUsuarios")
+                                        .document(emailUsuario)
+                                        .collection("LogrosObtenidos")
+                                        .document(logro.id)
+                                        .get()
+                                        .addOnSuccessListener { docLogro ->
+                                            if (!docLogro.exists()) {
+                                                // Guardar como obtenido
+                                                val logroGamificado = LogroGamificado(
+                                                    id = logro.id,
+                                                    titulo = logro.titulo,
+                                                    descripcion = logro.descripcion,
+                                                    puntos = logro.puntos,
+                                                    obtenido = true,
+                                                    fechaObtenido = com.google.firebase.Timestamp.now(),
+                                                    tipo = logro.tipo
+                                                )
+                                                db.collection("ProgresoUsuarios")
+                                                    .document(emailUsuario)
+                                                    .collection("LogrosObtenidos")
+                                                    .document(logro.id)
+                                                    .set(logroGamificado)
+                                                    .addOnSuccessListener {
+                                                        _logroConseguidoEvento.value = logroGamificado
+                                                        cargarDatos(emailUsuario)
+                                                    }
+                                            }
+                                        }
+                                }
+                            }
+                        }
+                    }
             }
     }
 

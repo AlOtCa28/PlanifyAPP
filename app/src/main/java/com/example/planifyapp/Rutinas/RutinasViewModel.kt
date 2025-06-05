@@ -92,24 +92,6 @@ class RutinasViewModel : ViewModel() {
             }
     }
 
-    fun actualizarTarea(rutinaId: String, tarea: Tarea) {
-        if (tarea.id.isNotEmpty()) {
-            db.collection("Rutinas")
-                .document(rutinaId)
-                .collection("Tareas")
-                .document(tarea.id)
-                .set(tarea)
-        }
-    }
-
-    fun eliminarTarea(rutinaId: String, tareaId: String) {
-        db.collection("Rutinas")
-            .document(rutinaId)
-            .collection("Tareas")
-            .document(tareaId)
-            .delete()
-    }
-
     fun agregarTarea(rutinaId: String, tarea: Tarea, onComplete: (Boolean, String?) -> Unit = { _, _ -> }) {
         val tareasCollection = db.collection("Rutinas").document(rutinaId).collection("Tareas")
         val docId = tareasCollection.document().id

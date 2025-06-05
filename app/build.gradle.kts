@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.androidx.navigation.runtime.android)
     implementation(libs.androidx.espresso.core.v351)
+    implementation(libs.androidx.foundation.android)
 
     // Testing
     testImplementation(libs.junit)

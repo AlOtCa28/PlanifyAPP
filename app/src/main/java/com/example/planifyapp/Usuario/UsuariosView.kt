@@ -1,6 +1,7 @@
 package ListadoAmant
 
 import Modelo.TareasYLogros.TareaGamificada
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,12 +9,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.TipsAndUpdates
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -21,6 +25,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +38,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -68,6 +74,20 @@ fun UsuariosView(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
+
+    val gamificacionViewModel: GamificacionViewModel = viewModel()
+    val tareas by gamificacionViewModel.tareas.collectAsState()
+    val emailUsuario = FirebaseAuth.getInstance().currentUser?.email ?: ""
+
+    val sugerencias by gamificacionViewModel.sugerencias.collectAsState()
+    var mostrarSugerencias by remember { mutableStateOf(false) }
+
+    LaunchedEffect(emailUsuario) {
+        if (emailUsuario.isNotEmpty()) {
+            gamificacionViewModel.cargarDatos(emailUsuario)
+            programarNotificaciones(emailUsuario, context)
+        }
+    }
 
     val opcionesMenu = listOf(
         OpcionMenu("Rutinas", Icons.Default.List, 0),
@@ -146,25 +166,29 @@ fun UsuariosView(
                         navigationIconContentColor = Color.White
                     )
                 )
-            }
-        ) { innerPadding ->
-            val gamificacionViewModel: GamificacionViewModel = viewModel()
-            val tareas by gamificacionViewModel.tareas.collectAsState()
-            val emailUsuario = FirebaseAuth.getInstance().currentUser?.email ?: ""
-
-            LaunchedEffect(emailUsuario) {
-                if (emailUsuario.isNotEmpty()) {
-                    gamificacionViewModel.cargarDatos(emailUsuario)
-                    programarNotificaciones(emailUsuario, context)
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        gamificacionViewModel.generarSugerencias(emailUsuario)
+                        mostrarSugerencias = !mostrarSugerencias
+                    },
+                    containerColor = DarkBackground,
+                    contentColor = Color.White
+                ) {
+                    Icon(Icons.Default.TipsAndUpdates, contentDescription = "Sugerencias")
                 }
             }
-
+        ) { innerPadding ->
+            // Scrollable Column para todo el contenido
             Column(
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize()
                     .background(FuchsiaLight)
-                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .padding(bottom = 96.dp) // Espacio para FAB
             ) {
                 Text("Bienvenido a PlanifyAPP", color = DarkBackground, modifier = Modifier.align(Alignment.CenterHorizontally))
                 Spacer(modifier = Modifier.height(8.dp))
@@ -173,14 +197,52 @@ fun UsuariosView(
 
                 TablonDeTareas(
                     tareas = tareas,
-                    onCompletarTarea = { tarea ->
-                        gamificacionViewModel.completarTarea(emailUsuario, tarea)
-                    }
+                    onCompletarTarea = { tarea -> gamificacionViewModel.completarTarea(emailUsuario, tarea) }
                 )
+
+                AnimatedVisibility(visible = mostrarSugerencias) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "Sugerencias para ti 💡",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = DarkBackground
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        if (sugerencias.isEmpty()) {
+                            Text("No hay sugerencias por ahora.", color = DarkBackground)
+                        } else {
+                            sugerencias.forEach { sugerencia ->
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.9f)
+                                        .padding(vertical = 4.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4))
+                                ) {
+                                    Column(Modifier.padding(8.dp)) {
+                                        Text(sugerencia.titulo, style = MaterialTheme.typography.titleSmall)
+                                        Text(sugerencia.descripcion, style = MaterialTheme.typography.bodySmall)
+                                        Text(
+                                            "Sugerida para ti porque: ${sugerencia.motivo}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 }
+
 
 
 @Composable
@@ -213,7 +275,7 @@ fun TablonDeTareas(
                     Text(tarea.descripcion, style = MaterialTheme.typography.bodySmall)
                     if (!tarea.completada) {
                         Button(
-                            onClick = {  onCompletarTarea(tarea)  },
+                            onClick = { onCompletarTarea(tarea) },
                             modifier = Modifier.padding(top = 8.dp)
                         ) {
                             Text("Completar (+${tarea.puntos} pts)")
@@ -226,6 +288,4 @@ fun TablonDeTareas(
         }
     }
 }
-
-
 

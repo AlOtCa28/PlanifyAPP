@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.RoomPreferences
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Task
 import com.example.makefriendsapp.Modelo.Menu.OpcionMenu
+import java.util.Calendar
 
 object Factorias {
 
@@ -40,8 +41,16 @@ object Factorias {
         return opciones
     }
 
-    fun getUsuario(): Usuario {
-        return Usuario()
+    fun diaANombre(numero: Int): String {
+        return when (numero) {
+            Calendar.MONDAY -> "Lunes"
+            Calendar.TUESDAY -> "Martes"
+            Calendar.WEDNESDAY -> "Miércoles"
+            Calendar.THURSDAY -> "Jueves"
+            Calendar.FRIDAY -> "Viernes"
+            Calendar.SATURDAY -> "Sábado"
+            Calendar.SUNDAY -> "Domingo"
+            else -> "Desconocido"
+        }
     }
-
 }
