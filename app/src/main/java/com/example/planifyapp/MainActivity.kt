@@ -7,14 +7,12 @@ import Registro.RegistroView
 import Registro.RegistroViewModel
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
@@ -22,8 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -40,22 +36,22 @@ import com.example.planifyapp.Eventos.EventosViewModel
 import com.example.planifyapp.Eventos.NuevoEvento.NuevoEventoImportanteView
 import com.example.planifyapp.GestionTareas.GestionTareasView
 import com.example.planifyapp.GestionTareas.NuevaTareaGeneralView
-import com.example.planifyapp.Logros.GestionLogrosView
 import com.example.planifyapp.Logros.NuevoLogroView
 import com.example.planifyapp.Perfil.PerfilView
-import com.example.planifyapp.Rutinas.EditarRutinas.DetalleRutinaView
+import com.example.planifyapp.Rutinas.DetallesRutinas.DetalleRutinaView
 import com.example.planifyapp.Rutinas.NuevaRutina.NuevaRutinaView
 import com.example.planifyapp.Rutinas.RutinasView
 import com.example.planifyapp.Rutinas.RutinasViewModel
 import com.example.planifyapp.Tareas.NuevaTareaView
 import com.example.planifyapp.Usuario.GamificacionViewModel
 import com.example.planifyapp.ui.theme.PlanifyAPPTheme
-import com.google.firebase.auth.FirebaseAuth
 import android.Manifest
 import android.content.Context
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Data
+import com.example.planifyapp.Eventos.DetallesEventos.DetalleEventoView
+import com.example.planifyapp.Logros.GestionLogrosView
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
@@ -154,7 +150,7 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("rutinaId") { type = NavType.StringType })
                         ) { backStackEntry ->
                             val rutinaId = backStackEntry.arguments?.getString("rutinaId") ?: ""
-                            DetalleRutinaView(rutinaId, rutinasVM, navController)
+                            DetalleRutinaView(rutinaId, rutinasVM, gamificacionVM,navController)
                         }
 
                         composable(
@@ -201,12 +197,24 @@ class MainActivity : ComponentActivity() {
                                 adminViewModel = AdminVM
                             )
                         }
+                        composable(
+                            route = Rutas.detalleEventoBase,
+                            arguments = listOf(navArgument("eventoId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val eventoId = backStackEntry.arguments?.getString("eventoId") ?: ""
+                            DetalleEventoView(
+                                eventoId,
+                                eventosVM,
+                                navController)
+                        }
                     }
                 }
             }
         }
     }
 }
+
+
 
 fun programarNotificaciones(emailUsuario: String, context: Context) {
     val datos = Data.Builder()

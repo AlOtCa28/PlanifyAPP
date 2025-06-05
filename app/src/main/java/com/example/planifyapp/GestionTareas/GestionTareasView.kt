@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Task
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,6 +45,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
@@ -159,15 +161,16 @@ fun GestionTareasView(
                     .background(FuchsiaLight)
                     .padding(16.dp)
             ) {
-                LaunchedEffect(true) {
+                LaunchedEffect(Unit) {
                     adminViewModel.cargarTareasGenerales()
                 }
-
-                val tareas by adminViewModel.tareasGenerales.collectAsState()
 
                 LazyColumn {
                     items(tareas) { tarea ->
                         ItemTareaGeneral(tarea, adminViewModel)
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(100.dp))
                     }
                 }
             }
@@ -175,12 +178,34 @@ fun GestionTareasView(
     }
 }
 
-
 @Composable
 fun ItemTareaGeneral(
     tarea: TareaGeneral,
     adminViewModel: AdminViewModel
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Estás seguro de que quieres eliminar esta tarea?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    adminViewModel.eliminarTareaGeneral(tarea.id)
+                    showDialog = false
+                }) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -197,7 +222,7 @@ fun ItemTareaGeneral(
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(onClick = {
-                    adminViewModel.eliminarTareaGeneral(tarea.id)
+                    showDialog = true
                 }) {
                     Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                 }
@@ -205,5 +230,6 @@ fun ItemTareaGeneral(
         }
     }
 }
+
 
 

@@ -17,6 +17,11 @@ object Rutas {
     const val NuevoLogro = "NuevoLogro"
 
 
+    // Ruta base para detalleEvento con parámetro {eventoId}
+    const val detalleEventoBase = "detalleEvento/{eventoId}"
+    fun detalleEvento(eventoId: String) = "detalleEvento/$eventoId"
+
+
     // Ruta base para detalleRutina con parámetro {rutinaId}
     const val detalleRutinaBase = "detalleRutina/{rutinaId}"
     fun detalleRutina(rutinaId: String) = "detalleRutina/$rutinaId"

@@ -1,5 +1,6 @@
 package Modelo.TareasYLogros
 
+import com.google.firebase.Timestamp
 import java.io.Serializable
 
 data class LogroGamificado(
@@ -8,7 +9,7 @@ data class LogroGamificado(
     val descripcion: String = "",
     val puntos: Int = 0,
     var obtenido: Boolean = false,
-    val fechaObtenido: com.google.firebase.Timestamp? = null,
+    val fechaObtenido: Timestamp? = null,
     var tipo: TipoLogro = TipoLogro.GENERAL // Añadido campo tipo también
 ) : Serializable
 

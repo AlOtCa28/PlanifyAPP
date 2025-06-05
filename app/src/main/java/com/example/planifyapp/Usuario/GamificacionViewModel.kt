@@ -254,57 +254,63 @@ class GamificacionViewModel : ViewModel() {
     }
 
     fun comprobarLogros(emailUsuario: String) {
-        // Obtener tareas completadas
-        db.collection("ProgresoUsuarios")
-            .document(emailUsuario)
-            .collection("TareasCompletadas")
+        val usuarioRef = db.collection("ProgresoUsuarios").document(emailUsuario)
+
+        // Obtener tareas completadas del tablón
+        usuarioRef.collection("TareasCompletadas")
             .get()
-            .addOnSuccessListener { tareasSnapshot ->
-                val tareasCompletadasCount = tareasSnapshot.documents.count { it.getBoolean("completada") == true }
+            .addOnSuccessListener { tareasTablonSnapshot ->
+                val tareasTablonCompletadas = tareasTablonSnapshot.documents.count { it.getBoolean("completada") == true }
 
-                // Obtener logros generales
-                db.collection("LogrosGenerales")
+                // Obtener tareas completadas de rutina
+                usuarioRef.collection("TareasRutinaCompletadas")
                     .get()
-                    .addOnSuccessListener { logrosSnapshot ->
+                    .addOnSuccessListener { tareasRutinaSnapshot ->
+                        val tareasRutinaCompletadas = tareasRutinaSnapshot.documents.count { it.getBoolean("completada") == true }
 
-                        for (doc in logrosSnapshot.documents) {
-                            val logro = doc.toObject(Logro::class.java)?.apply { id = doc.id }
-                            if (logro != null && logro.tipo == TipoLogro.PUNTUAL) {
-                                if (logro.titulo.contains("SANGUINARIO") && tareasCompletadasCount >= 5) {
-                                    db.collection("ProgresoUsuarios")
-                                        .document(emailUsuario)
-                                        .collection("LogrosObtenidos")
-                                        .document(logro.id)
-                                        .get()
-                                        .addOnSuccessListener { docLogro ->
-                                            if (!docLogro.exists()) {
-                                                // Guardar como obtenido
-                                                val logroGamificado = LogroGamificado(
-                                                    id = logro.id,
-                                                    titulo = logro.titulo,
-                                                    descripcion = logro.descripcion,
-                                                    puntos = logro.puntos,
-                                                    obtenido = true,
-                                                    fechaObtenido = com.google.firebase.Timestamp.now(),
-                                                    tipo = logro.tipo
-                                                )
-                                                db.collection("ProgresoUsuarios")
-                                                    .document(emailUsuario)
-                                                    .collection("LogrosObtenidos")
-                                                    .document(logro.id)
-                                                    .set(logroGamificado)
-                                                    .addOnSuccessListener {
-                                                        _logroConseguidoEvento.value = logroGamificado
-                                                        cargarDatos(emailUsuario)
+                        val totalTareasCompletadas = tareasTablonCompletadas + tareasRutinaCompletadas
+
+                        // Obtener logros generales
+                        db.collection("LogrosGenerales")
+                            .get()
+                            .addOnSuccessListener { logrosSnapshot ->
+
+                                for (doc in logrosSnapshot.documents) {
+                                    val logro = doc.toObject(Logro::class.java)?.apply { id = doc.id }
+
+                                    if (logro != null && logro.tipo == TipoLogro.PUNTUAL) {
+                                        if (logro.titulo.contains("SANGUINARIO") && totalTareasCompletadas >= 5) {
+                                            usuarioRef.collection("LogrosObtenidos")
+                                                .document(logro.id)
+                                                .get()
+                                                .addOnSuccessListener { docLogro ->
+                                                    if (!docLogro.exists()) {
+                                                        val logroGamificado = LogroGamificado(
+                                                            id = logro.id,
+                                                            titulo = logro.titulo,
+                                                            descripcion = logro.descripcion,
+                                                            puntos = logro.puntos,
+                                                            obtenido = true,
+                                                            fechaObtenido = com.google.firebase.Timestamp.now(),
+                                                            tipo = logro.tipo
+                                                        )
+                                                        usuarioRef.collection("LogrosObtenidos")
+                                                            .document(logro.id)
+                                                            .set(logroGamificado)
+                                                            .addOnSuccessListener {
+                                                                _logroConseguidoEvento.value = logroGamificado
+                                                                cargarDatos(emailUsuario)
+                                                            }
                                                     }
-                                            }
+                                                }
                                         }
+                                    }
                                 }
                             }
-                        }
                     }
             }
     }
+
 
 
     @OptIn(ExperimentalCoroutinesApi::class)

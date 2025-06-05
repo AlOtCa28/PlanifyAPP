@@ -102,7 +102,11 @@ class RutinasViewModel : ViewModel() {
             .addOnFailureListener { e -> onComplete(false, e.message) }
     }
 
-    fun marcarTareaCompletada(tarea: Tarea, completada: Boolean) {
+    fun marcarTareaCompletada(
+        tarea: Tarea,
+        completada: Boolean,
+        onCompletado: () -> Unit = {}
+    ) {
         val rutina = _rutinaSeleccionada.value ?: return
         val email = Parametros.usuarioLogged?.correo ?: return
 
@@ -122,7 +126,6 @@ class RutinasViewModel : ViewModel() {
 
                 progresoRef.get().addOnSuccessListener { docSnapshot ->
                     if (!docSnapshot.exists()) {
-                        // Guarda todos los campos de la tarea
                         progresoRef.set(
                             mapOf(
                                 "id" to tarea.id,
@@ -135,12 +138,16 @@ class RutinasViewModel : ViewModel() {
                         ).addOnSuccessListener {
                             val usuarioRef = db.collection("Usuarios").document(email)
                             usuarioRef.update("puntos", FieldValue.increment(tarea.puntos.toLong()))
+                                .addOnSuccessListener {
+                                    onCompletado()
+                                }
                         }
                     }
                 }
             }
         }
     }
+
 
     fun setEmailUsuario(email: String) {
         emailUsuario = email

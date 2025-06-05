@@ -2,6 +2,7 @@ package com.example.planifyapp.Eventos
 
 import Modelo.EventoImportante.EventoImportante
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -157,7 +158,7 @@ fun EventosView(
 
                 LazyColumn {
                     items(eventos) { evento ->
-                        ItemEvento(evento, eventosViewModel)
+                        ItemEvento(evento, eventosViewModel, navHostController)
                     }
                     item {
                         Spacer(modifier = Modifier.height(80.dp)) // espacio para que FAB no tape último ítem
@@ -169,7 +170,7 @@ fun EventosView(
 }
 
 @Composable
-fun ItemEvento(evento: EventoImportante, eventosViewModel: EventosViewModel) {
+fun ItemEvento(evento: EventoImportante, eventosViewModel: EventosViewModel,navHostController: NavHostController) {
     var estadoNotificacion by remember { mutableStateOf(evento.notificarUnaSemanaAntes) }
 
     LaunchedEffect(evento.notificarUnaSemanaAntes) {
@@ -179,7 +180,10 @@ fun ItemEvento(evento: EventoImportante, eventosViewModel: EventosViewModel) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable {
+                navHostController.navigate(Rutas.detalleEvento(evento.id))  // Navegar al detalle del evento
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Task
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -40,6 +41,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
@@ -174,6 +176,31 @@ fun ItemLogro(
     logro: Logro,
     adminViewModel: AdminViewModel
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Estás seguro de que quieres eliminar este logro?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    adminViewModel.eliminarLogro(logro.id) {
+                        println("Logro eliminado correctamente")
+                    }
+                    showDialog = false
+                }) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -191,12 +218,7 @@ fun ItemLogro(
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(onClick = {
-                    adminViewModel.eliminarLogro(
-                        logro.id,
-                        onComplete = {
-                            println("Logro eliminado correctamente")
-                        }
-                    )
+                    showDialog = true
                 }) {
                     Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                 }

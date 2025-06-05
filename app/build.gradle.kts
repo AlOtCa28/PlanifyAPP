@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.android)
     implementation(libs.androidx.espresso.core.v351)
     implementation(libs.androidx.foundation.android)
+    implementation(libs.androidx.foundation.layout.android)
 
     // Testing
     testImplementation(libs.junit)
