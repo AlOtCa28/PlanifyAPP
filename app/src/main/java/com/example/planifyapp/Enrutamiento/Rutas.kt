@@ -15,6 +15,7 @@ object Rutas {
     const val AdminLogros = "AdminLogros"
     const val NuevaTareaGeneral = "NuevaTarea"
     const val NuevoLogro = "NuevoLogro"
+    const val EditarPerfil = "editarPerfil"
 
 
     // Ruta base para detalleEvento con parámetro {eventoId}

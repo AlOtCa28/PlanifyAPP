@@ -14,10 +14,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -53,10 +55,12 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.example.makefriendsapp.Enrutamiento.Rutas
 import com.example.planifyapp.R
 import com.example.planifyapp.Usuario.GamificacionViewModel
 import com.example.planifyapp.ui.theme.DarkBackground
 import com.example.planifyapp.ui.theme.FuchsiaLight
+import com.example.planifyapp.ui.theme.FuchsiaStrong
 import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -195,7 +199,22 @@ fun PerfilView(navController: NavHostController, gamificacionViewModel: Gamifica
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { navController.navigate(Rutas.EditarPerfil) },
+                modifier = Modifier.padding(top = 8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = DarkBackground,
+                    contentColor = Color.White
+                )
+            ) {
+                Icon(Icons.Default.Edit, contentDescription = "Editar", modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Editar perfil")
+            }
         }
+
         Button(
             onClick = { navController.popBackStack() },
             modifier = Modifier
@@ -210,6 +229,7 @@ fun PerfilView(navController: NavHostController, gamificacionViewModel: Gamifica
         }
     }
 }
+
 
 
 

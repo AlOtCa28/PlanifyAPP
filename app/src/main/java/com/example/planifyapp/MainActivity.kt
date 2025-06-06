@@ -47,11 +47,16 @@ import com.example.planifyapp.Usuario.GamificacionViewModel
 import com.example.planifyapp.ui.theme.PlanifyAPPTheme
 import android.Manifest
 import android.content.Context
+import android.widget.Toast
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Data
+import androidx.work.ExistingPeriodicWorkPolicy
+import com.example.planifyapp.Auxiliar.NotificacionWorker
 import com.example.planifyapp.Eventos.DetallesEventos.DetalleEventoView
 import com.example.planifyapp.Logros.GestionLogrosView
+import com.example.planifyapp.Perfil.EditarPerfil.EditarPerfilView
+import com.example.planifyapp.Perfil.EditarPerfil.EditarPerfilViewModel
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
@@ -84,6 +89,7 @@ class MainActivity : ComponentActivity() {
                     val rutinasVM = RutinasViewModel()
                     val eventosVM = EventosViewModel()
                     val gamificacionVM = GamificacionViewModel()
+                    val perfilVM = EditarPerfilViewModel()
 
 
                     NavHost(navController = navController, startDestination = "Login") {
@@ -160,11 +166,6 @@ class MainActivity : ComponentActivity() {
                             val rutinaId = backStackEntry.arguments?.getString("rutinaId") ?: ""
                             NuevaTareaView(rutinaId, rutinasVM, navController)
                         }
-                        composable(Rutas.Perfil) {
-                            PerfilView(
-                                navController,
-                                gamificacionVM)
-                        }
                         composable(Rutas.Estadisticas) {
                             EstadisticasView(
                                 navController,
@@ -207,6 +208,15 @@ class MainActivity : ComponentActivity() {
                                 eventosVM,
                                 navController)
                         }
+                        composable(Rutas.Perfil) {
+                            PerfilView(navController, gamificacionVM)
+                        }
+                            composable(Rutas.EditarPerfil) {
+                                EditarPerfilView(
+                                    navController = navController,
+                                    perfilViewModel = perfilVM
+                                )
+                            }
                     }
                 }
             }
@@ -221,13 +231,13 @@ fun programarNotificaciones(emailUsuario: String, context: Context) {
         .putString("emailUsuario", emailUsuario)
         .build()
 
-    val workRequest = PeriodicWorkRequestBuilder<com.example.planifyapp.Auxiliar.NotificacionWorker>(15, TimeUnit.MINUTES)
+    val workRequest = PeriodicWorkRequestBuilder<NotificacionWorker>(15, TimeUnit.MINUTES)
         .setInputData(datos)
         .build()
 
     WorkManager.getInstance(context).enqueueUniquePeriodicWork(
         "NotificacionesRutinasEventos",
-        androidx.work.ExistingPeriodicWorkPolicy.UPDATE,
+        ExistingPeriodicWorkPolicy.UPDATE,
         workRequest
     )
 }

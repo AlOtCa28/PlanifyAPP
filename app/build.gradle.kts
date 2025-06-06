@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.androidx.espresso.core.v351)
     implementation(libs.androidx.foundation.android)
     implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.ads.mobile.sdk)
 
     // Testing
     testImplementation(libs.junit)

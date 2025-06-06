@@ -171,29 +171,6 @@ object Conexiones {
     }
 
 
-
-    suspend fun subirImagenAlStorageSuspend(bitmap: Bitmap, nombreArchivo: String) {
-        val storage = FirebaseStorage.getInstance()
-        val storageRef: StorageReference = storage.reference.child("imagenes/$nombreArchivo")
-
-        // Convertir el Bitmap a un ByteArray
-        val baos = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
-        val data = baos.toByteArray()
-
-        suspendCoroutine<Unit> { continuation ->
-            val uploadTask = storageRef.putBytes(data)
-
-            uploadTask.addOnSuccessListener {
-                // La imagen se subió exitosamente
-                continuation.resume(Unit)
-            }.addOnFailureListener { exception ->
-                // Ocurrió un error al subir la imagen
-                continuation.resumeWithException(exception)
-            }
-        }
-    }
-
     suspend fun downloadImageFromUri(uriAdjunto: Uri): Bitmap? {
         return try {
             val storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(uriAdjunto.toString())
@@ -316,4 +293,105 @@ object Conexiones {
             .delete()
     }
 
+    fun obtenerUsuarioPorCorreo(correo: String, callback: (Usuario?) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("Usuarios")
+            .document(correo)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val usuario = document.toObject(Usuario::class.java)
+                    callback(usuario)
+                } else {
+                    callback(null)
+                }
+            }
+            .addOnFailureListener {
+                callback(null)
+            }
+    }
+
+    fun actualizarUsuario(usuario: Usuario, callback: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("Usuarios")
+            .document(usuario.correo)
+            .set(usuario)
+            .addOnSuccessListener { callback(true) }
+            .addOnFailureListener { callback(false) }
+    }
+
+    suspend fun descargarImagenDesdeStorageSuspend(nombreArchivo: String): Bitmap? = suspendCoroutine { cont ->
+        val storageRef = FirebaseStorage.getInstance().reference.child("imagenes/$nombreArchivo")
+        storageRef.getBytes(1024 * 1024).addOnSuccessListener { bytes ->
+            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            cont.resume(bmp)
+        }.addOnFailureListener {
+            cont.resume(null)
+        }
+    }
+
+    suspend fun actualizarUsuarioSuspend(usuario: Usuario): Boolean = suspendCoroutine { cont ->
+        val db = FirebaseFirestore.getInstance()
+        db.collection("Usuarios")
+            .document(usuario.correo)
+            .set(usuario)
+            .addOnSuccessListener { cont.resume(true) }
+            .addOnFailureListener { cont.resume(false) }
+    }
+
+    suspend fun subirImagenAlStorageSuspend(bitmap: Bitmap, nombreArchivo: String) {
+        val storage = FirebaseStorage.getInstance()
+        val referencia = storage.reference.child("imagenes/$nombreArchivo")
+
+        val baos = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+        val datos = baos.toByteArray()
+
+        referencia.putBytes(datos).await()
+    }
+
+
+    suspend fun guardarUsuarioFirestoreSuspend(usuario: Usuario) {
+        val datos = mapOf(
+            "Correo" to usuario.correo,
+            "Edad" to usuario.edad,
+            "Esta activo" to usuario.isActivo,
+            "Foto" to usuario.foto,
+            "Genero" to usuario.genero,
+            "Nombre" to usuario.nombreUser,
+            "Roles" to usuario.roles
+        )
+        db.collection("Usuarios").document(usuario.correo).set(datos).await()
+    }
+
+
+    suspend fun obtenerUsuarioActualSuspend(correo: String): Usuario? {
+        val doc = db.collection("Usuarios").document(correo).get().await()
+        if (!doc.exists()) return null
+
+        val map = doc.data ?: return null
+
+        return Usuario(
+            nombreUser = map["Nombre"] as? String ?: "",
+            correo = map["Correo"] as? String ?: "",
+            roles = (map["Roles"] as? List<Long>)?.let { ArrayList(it) } ?: arrayListOf(),
+            isActivo = map["Esta activo"] as? Boolean ?: false,
+            edad = (map["Edad"] as? Number)?.toLong() ?: 0L,
+            genero = (map["Genero"] as? Number)?.toLong() ?: 1L,
+            foto = map["Foto"] as? String ?: ""
+        )
+    }
+
+    suspend fun descargarImagenDesdeFirebase(correo: String): Bitmap? {
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference.child("imagenes/$correo.jpeg")
+
+        return try {
+            val MAX_SIZE: Long = 1024 * 1024 * 5 // 5MB
+            val bytes = storageRef.getBytes(MAX_SIZE).await()
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

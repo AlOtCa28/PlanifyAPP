@@ -1,6 +1,8 @@
 package com.example.planifyapp.Usuario
 
 import Auxiliar.Factorias.diaANombre
+import Conexion.Conexiones
+import Conexion.Conexiones.subirImagenAlStorageSuspend
 import Modelo.TareasYLogros.LogroGamificado
 import Modelo.TareasYLogros.TareaGamificada
 import Modelo.TareasYLogros.TareaGeneral
@@ -8,10 +10,18 @@ import Modelo.Rutina.Tarea // Asegúrate de tener este import o el correcto para
 import Modelo.Sugerencia.Sugerencia
 import Modelo.TareasYLogros.Logro
 import Modelo.TareasYLogros.TipoLogro
+import Modelo.Usuario.Usuario
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.makefriendsapp.Auxiliar.Parametros
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -19,7 +29,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.util.Calendar
 import kotlin.coroutines.resume
@@ -28,6 +40,13 @@ import kotlin.coroutines.resumeWithException
 class GamificacionViewModel : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
+
+    private val _usuarioActualFlow = MutableStateFlow<Usuario?>(null)
+    val usuarioActualFlow: StateFlow<Usuario?> get() = _usuarioActualFlow
+
+    private val conexion = Conexiones
+
+    var bitmapFotoPerfil: Bitmap? by mutableStateOf(null)
 
     private val _tareas = MutableStateFlow<List<TareaGamificada>>(emptyList())
     val tareas: StateFlow<List<TareaGamificada>> = _tareas
@@ -51,7 +70,6 @@ class GamificacionViewModel : ViewModel() {
     fun limpiarEvento() {
         _logroConseguidoEvento.value = null
     }
-
 
     fun cargarDatos(emailUsuario: String) {
         // Cargar tareas generales (igual que antes)
@@ -328,5 +346,14 @@ class GamificacionViewModel : ViewModel() {
         }
     }
 
+
+    private fun descargarImagen(nombreFoto: String) {
+        viewModelScope.launch {
+            val bmp = conexion.descargarImagenDesdeStorageSuspend(nombreFoto)
+            bmp?.let {
+                bitmapFotoPerfil = it
+            }
+        }
+    }
 
 }
