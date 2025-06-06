@@ -148,6 +148,39 @@ class RutinasViewModel : ViewModel() {
         }
     }
 
+    fun sugerirTareasParaRutina(rutinaId: String, onResultado: (List<Tarea>) -> Unit) {
+        val email = Parametros.usuarioLogged?.correo ?: return
+
+        db.collection("ProgresoUsuarios")
+            .document(email)
+            .collection("TareasRutinaCompletadas")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val tareasPasadas = snapshot.documents.mapNotNull { it.toObject(Tarea::class.java) }
+
+                if (tareasPasadas.isEmpty()) {
+                    onResultado(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                val tareasAgrupadas = tareasPasadas.groupBy { it.titulo.trim().lowercase() }
+
+                val tareasSugeridas = tareasAgrupadas.entries
+                    .sortedByDescending { it.value.size }
+                    .take(3)
+                    .map { entry ->
+                        val muestra = entry.value.first()
+                        Tarea(
+                            titulo = muestra.titulo,
+                            descripcion = muestra.descripcion,
+                            puntos = muestra.puntos
+                        )
+                    }
+
+                onResultado(tareasSugeridas)
+            }
+    }
+
 
     fun setEmailUsuario(email: String) {
         emailUsuario = email
