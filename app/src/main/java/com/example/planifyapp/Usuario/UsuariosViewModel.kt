@@ -120,10 +120,8 @@ class UsuariosViewModel : ViewModel() {
                             foto = foto
                         )
 
-                        // Verificar si el usuario ya existe en la lista
                         val existeUsuario = Parametros.usuarios.any { it.correo == correo }
                         if (!existeUsuario) {
-                            // Agregar usuario a la lista estática en Interventanas si no existe
                             Parametros.usuarios.add(usuario)
                         }
                     }
