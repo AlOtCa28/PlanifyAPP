@@ -1,5 +1,6 @@
 package com.example.planifyapp.Perfil.EditarPerfil
 
+import Conexion.Conexiones
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.os.Build
@@ -72,7 +73,7 @@ fun EditarPerfilView(
             nombre = usuarioData!!.nombreUser
             edadTexto = usuarioData!!.edad.toString()
             generoSeleccionado = usuarioData!!.genero.toInt()
-            perfilViewModel.descargarImagenDesdeFirebase(usuarioData!!.correo)?.let {
+            Conexiones.descargarImagenDesdeFirebase(usuarioData!!.correo)?.let {
                 fotoBitmap = it
             }
             camposInicializados = true

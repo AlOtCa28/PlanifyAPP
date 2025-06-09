@@ -54,10 +54,4 @@ class EditarPerfilViewModel : ViewModel() {
             Conexiones.subirImagenAlStorageSuspend(bitmap, "$correo.jpeg")
         }
     }
-
-    fun descargarImagenDesdeFirebase(correo: String): Bitmap? {
-        return runBlocking {
-            Conexiones.descargarImagenDesdeFirebase(correo)
-        }
-    }
 }

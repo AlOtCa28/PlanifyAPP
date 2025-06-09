@@ -62,7 +62,6 @@ dependencies {
     implementation(libs.google.firebase.analytics)
 
     // Google Play Services
-    implementation(libs.play.services.maps)
     implementation(libs.androidx.navigation.runtime.android)
     implementation(libs.androidx.espresso.core.v351)
     implementation(libs.androidx.foundation.android)
@@ -109,4 +108,7 @@ dependencies {
 
     // WorkManager para tareas programadas
     implementation(libs.androidx.work.runtime.ktx)
+
+    implementation("com.google.maps.android:maps-compose:4.4.1")
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
 }

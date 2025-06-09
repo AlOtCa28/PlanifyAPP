@@ -329,29 +329,13 @@ class GamificacionViewModel : ViewModel() {
             }
     }
 
-
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun descargarImagenDesdeFirebase(correo: String): Bitmap? = suspendCancellableCoroutine { continuation ->
-        val localFile = File.createTempFile("tempImage", "jpeg")
-
-        val storage = FirebaseStorage.getInstance()
-        val storageReference = storage.reference.child("imagenes/$correo")
-
-        storageReference.getFile(localFile).addOnSuccessListener {
-            val bitmap = BitmapFactory.decodeFile(localFile.absolutePath)
-            continuation.resume(bitmap)
-        }.addOnFailureListener { exception ->
-            continuation.resumeWithException(exception)
-        }
-    }
-
-
-    private fun descargarImagen(nombreFoto: String) {
+    fun subirFotoPerfil(bitmap: Bitmap, emailUsuario: String) {
         viewModelScope.launch {
-            val bmp = conexion.descargarImagenDesdeStorageSuspend(nombreFoto)
-            bmp?.let {
-                bitmapFotoPerfil = it
+            try {
+                conexion.subirImagenAlStorageSuspend(bitmap, "$emailUsuario.jpeg")
+                bitmapFotoPerfil = bitmap
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

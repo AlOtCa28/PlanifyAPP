@@ -23,9 +23,12 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -320,16 +323,6 @@ object Conexiones {
             .addOnFailureListener { callback(false) }
     }
 
-    suspend fun descargarImagenDesdeStorageSuspend(nombreArchivo: String): Bitmap? = suspendCoroutine { cont ->
-        val storageRef = FirebaseStorage.getInstance().reference.child("imagenes/$nombreArchivo")
-        storageRef.getBytes(1024 * 1024).addOnSuccessListener { bytes ->
-            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            cont.resume(bmp)
-        }.addOnFailureListener {
-            cont.resume(null)
-        }
-    }
-
     suspend fun actualizarUsuarioSuspend(usuario: Usuario): Boolean = suspendCoroutine { cont ->
         val db = FirebaseFirestore.getInstance()
         db.collection("Usuarios")
@@ -382,16 +375,17 @@ object Conexiones {
         )
     }
 
-    suspend fun descargarImagenDesdeFirebase(correo: String): Bitmap? {
-        val storage = FirebaseStorage.getInstance()
-        val storageRef = storage.reference.child("imagenes/$correo.jpeg")
+    suspend fun descargarImagenDesdeFirebase(correo: String): Bitmap? = suspendCancellableCoroutine { continuation ->
+        val localFile = File.createTempFile("tempImage", "jpeg")
 
-        return try {
-            val MAX_SIZE: Long = 1024 * 1024 * 5 // 5MB
-            val bytes = storageRef.getBytes(MAX_SIZE).await()
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        } catch (e: Exception) {
-            null
+        val storage = FirebaseStorage.getInstance()
+        val storageReference = storage.reference.child("imagenes/$correo")
+
+        storageReference.getFile(localFile).addOnSuccessListener {
+            val bitmap = BitmapFactory.decodeFile(localFile.absolutePath)
+            continuation.resume(bitmap)
+        }.addOnFailureListener { exception ->
+            continuation.resumeWithException(exception)
         }
     }
 }

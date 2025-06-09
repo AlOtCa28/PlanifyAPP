@@ -83,7 +83,7 @@ fun PerfilView(navController: NavHostController, gamificacionViewModel: Gamifica
 
     LaunchedEffect(user?.email) {
         user?.email?.let {
-            fotoPerfil = gamificacionViewModel.descargarImagenDesdeFirebase(it)
+            fotoPerfil = Conexiones.descargarImagenDesdeFirebase(it)
         }
     }
 

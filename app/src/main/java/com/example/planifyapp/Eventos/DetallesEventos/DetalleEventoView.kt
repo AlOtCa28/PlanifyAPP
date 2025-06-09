@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +47,14 @@ import com.example.planifyapp.Eventos.EventosViewModel
 import com.example.planifyapp.ui.theme.DarkBackground
 import com.example.planifyapp.ui.theme.FuchsiaLight
 import com.example.planifyapp.ui.theme.FuchsiaStrong
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -138,6 +147,36 @@ fun DetalleEventoView(
                             style = MaterialTheme.typography.bodyMedium,
                             color = DarkBackground
                         )
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        if (e.latitud != null && e.longitud != null) {
+                            val cameraPositionState = remember(e.latitud, e.longitud) {
+                                CameraPositionState(
+                                    position = CameraPosition.fromLatLngZoom(LatLng(e.latitud!!, e.longitud!!), 15f)
+                                )
+                            }
+
+                            GoogleMap(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                cameraPositionState = cameraPositionState
+                            ) {
+                                Marker(
+                                    state = MarkerState(position = LatLng(e.latitud!!, e.longitud!!)),
+                                    title = e.titulo,
+                                    snippet = e.descripcion
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = "Ubicación no disponible",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = DarkBackground,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
                     }
                 }
             }
