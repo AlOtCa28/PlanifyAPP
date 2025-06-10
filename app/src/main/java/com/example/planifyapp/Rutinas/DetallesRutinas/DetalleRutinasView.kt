@@ -129,7 +129,7 @@ fun DetalleRutinaView(
                                         if (tarea.completada) "Completada ✅" else "Pendiente",
                                         color = if (tarea.completada) Color(0xFF388E3C) else DarkBackground
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(40.dp))
                                     androidx.compose.material3.Switch(
                                         checked = tarea.completada,
                                         onCheckedChange = { isChecked ->

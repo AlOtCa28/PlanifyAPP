@@ -95,7 +95,6 @@ fun UsuariosView(
         OpcionMenu("Cerrar sesión", Icons.Default.ExitToApp, 2)
     )
 
-    var opcionSeleccionada by remember { mutableStateOf(opcionesMenu[0]) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -104,11 +103,16 @@ fun UsuariosView(
                 Spacer(modifier = Modifier.height(16.dp))
                 opcionesMenu.forEach { opcion ->
                     NavigationDrawerItem(
-                        icon = { Icon(opcion.icono, contentDescription = opcion.opcion, tint = DarkBackground) },
+                        icon = {
+                            Icon(
+                                opcion.icono,
+                                contentDescription = opcion.opcion,
+                                tint = DarkBackground
+                            )
+                        },
                         label = { Text(opcion.opcion, color = DarkBackground) },
-                        selected = opcion == opcionSeleccionada,
+                        selected = opcion == opcionElegida,
                         onClick = {
-                            opcionSeleccionada = opcion
                             scope.launch { drawerState.close() }
 
                             when (opcion.codigo) {

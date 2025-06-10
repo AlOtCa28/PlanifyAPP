@@ -207,7 +207,7 @@ fun RegistroView(navController: NavHostController
         btCambiarFoto(
             modifier = Modifier.constrainAs(btCambiarFoto){
                 top.linkTo(lblFoto.bottom, margin = 40.dp)
-                start.linkTo(parent.start, margin = 50.dp)
+                start.linkTo(parent.start, margin = 30.dp)
             },
             registroViewModel = registroViewModel,
         )
@@ -239,16 +239,16 @@ fun RegistroView(navController: NavHostController
             user = user,
             registroViewModel = registroViewModel,
             modifier = Modifier.constrainAs(btRegistrar) {
-                top.linkTo(btCambiarFoto.bottom, margin = 22.dp)
-                start.linkTo(parent.start, margin = 30.dp)
+                top.linkTo(btCambiarFoto.bottom, margin = 35.dp)
+                start.linkTo(parent.start, margin = 26.dp)
             },
             navHostController = navController
         )
 
         btLimpiarCampos(modifier = Modifier.constrainAs(btLimpiar){
-            start.linkTo(btRegistrar.end, margin = 20.dp)
+            start.linkTo(btRegistrar.end, margin = 28.dp)
             top.linkTo(btCambiarFoto.bottom)
-            bottom.linkTo(parent.bottom, margin =20.dp)
+            bottom.linkTo(parent.bottom, margin = 25.dp)
 
         }, context = context){
             registroViewModel.onLimpiarCampos()
@@ -257,7 +257,7 @@ fun RegistroView(navController: NavHostController
         btSalir(modifier = Modifier.constrainAs(btSalir){
             start.linkTo(btLimpiar.end)
             top.linkTo(btCambiarFoto.bottom)
-            bottom.linkTo(parent.bottom, margin = 20.dp)
+            bottom.linkTo(parent.bottom, margin = 25.dp)
             end.linkTo(parent.end)
 
         }, navHostController = navController)
@@ -443,7 +443,7 @@ fun btRegistrar(
         modifier = modifier,
         colors = ButtonDefaults.buttonColors(containerColor = FuchsiaStrong)
     ) {
-        Text("Registrar")
+        Text("REGISTRAR")
     }
 }
 
